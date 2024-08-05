@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      https://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,170 +16,182 @@
 
 package io.r2dbc.h2.codecs;
 
-import io.r2dbc.h2.client.Client;
-import io.r2dbc.h2.util.Assert;
-import org.h2.value.Value;
-import org.h2.value.ValueNull;
-import reactor.util.annotation.Nullable;
-
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.h2.value.Value;
+import org.h2.value.ValueNull;
+
+import io.r2dbc.h2.client.Client;
+import io.r2dbc.h2.util.Assert;
+import reactor.util.annotation.Nullable;
+
 /**
- * The default {@link Codecs} implementation. Delegates to type-specific codec implementations.
+ * The default {@link Codecs} implementation. Delegates to type-specific codec
+ * implementations.
  */
 public final class DefaultCodecs implements Codecs {
 
-    private final List<Codec<?>> codecs;
+	private final List<Codec<?>> codecs;
 
-    /**
-     * Constructs a new DefaultCodecs (The Default {@link Codec}s list).
-     *
-     * @param client for Lobs {@link Codec}s and whose class loader is used to search for optional {@link Codec}s.
-     */
-    public DefaultCodecs(Client client) {
-        this.codecs = createCodecs(client, client.getClass().getClassLoader(), this);
-    }
+	/**
+	 * Constructs a new DefaultCodecs (The Default {@link Codec}s list).
+	 *
+	 * @param client for Lobs {@link Codec}s and whose class loader is used to
+	 *               search for optional {@link Codec}s.
+	 */
+	public DefaultCodecs(final Client client) {
 
-    @Override
-    @Nullable
-    @SuppressWarnings("unchecked")
-    public <T> T decode(Value value, int dataType, Class<? extends T> type) {
-        Assert.requireNonNull(type, "type must not be null");
+		this.codecs = createCodecs(client, client.getClass().getClassLoader(), this);
 
-        if (value == null || value instanceof ValueNull) {
-            return null;
-        }
+	}
 
-        for (Codec<?> codec : this.codecs) {
-            if (codec.canDecode(dataType, type)) {
-                return ((Codec<T>) codec).decode(value, type);
-            }
-        }
+	@Override
+	@Nullable
+	@SuppressWarnings("unchecked")
+	public <T> T decode(final Value value, final int dataType, final Class<? extends T> type) {
 
-        throw new IllegalArgumentException(String.format("Cannot decode value of type %s", type.getName()));
-    }
+		Assert.requireNonNull(type, "type must not be null");
 
-    @Override
-    public Value encode(Object value) {
-        Assert.requireNonNull(value, "value must not be null");
+		if (value == null || value instanceof ValueNull) {
 
-        for (Codec<?> codec : this.codecs) {
-            if (codec.canEncode(value)) {
-                return codec.encode(value);
-            }
-        }
+			return null;
+		}
 
-        throw new IllegalArgumentException(String.format("Cannot encode parameter of type %s", value.getClass().getName()));
-    }
+		for (final Codec<?> codec : this.codecs) {
 
-    @Override
-    public Value encodeNull(Class<?> type) {
-        Assert.requireNonNull(type, "type must not be null");
+			if (codec.canDecode(dataType, type)) {
 
-        for (Codec<?> codec : this.codecs) {
-            if (codec.canEncodeNull(type)) {
-                return codec.encodeNull();
-            }
-        }
+				return ((Codec<T>) codec).decode(value, type);
+			}
+		}
 
-        throw new IllegalArgumentException(String.format("Cannot encode null parameter of type %s", type.getName()));
-    }
+		throw new IllegalArgumentException(String.format("Cannot decode value of type %s", type.getName()));
 
-    @Override
-    public Class<?> preferredType(int dataType) {
+	}
 
-        if (dataType == Value.NULL) {
-            return Void.class;
-        }
+	@Override
+	public Value encode(final Object value) {
 
-        for (Codec<?> codec : this.codecs) {
-            if (codec.canDecode(dataType, Object.class)) {
-                return codec.type();
-            }
-        }
+		Assert.requireNonNull(value, "value must not be null");
 
-        return null;
-    }
+		for (final Codec<?> codec : this.codecs) {
 
-    /**
-     * Creates Default {@link Codec}s list
-     *
-     * @param client      for Lobs {@link Codec}s
-     * @param classLoader to scan for classes
-     * @param codecs      for codecs that rely on other codecs
-     * @return a {@link List} of default {@link Codec}s
-     */
-    static List<Codec<?>> createCodecs(Client client, ClassLoader classLoader, Codecs codecs) {
-        return Stream.concat(
-            Stream.concat(
-                Stream.of(
-                    new BigDecimalCodec(),
-                    new BlobToByteBufferCodec(client),
-                    new BlobCodec(client),
-                    new BooleanCodec(),
-                    new ByteCodec(),
-                    new BytesCodec(),
-                    new ClobToStringCodec(client),
-                    new ClobCodec(client),
-                    new DoubleCodec(),
-                    new FloatCodec(),
-                    new IntegerCodec(),
-                    new JsonCodec(),
-                    new LocalDateCodec(),
-                    new LocalDateTimeCodec(client),
-                    new LocalTimeCodec(),
-                    new LongCodec(),
-                    new OffsetDateTimeCodec(client),
-                    new OffsetTimeCodec(client),
-                    new ShortCodec(),
-                    new StringCodec(),
-                    new UuidCodec(),
-                    new ZonedDateTimeCodec(client),
-                    new InstantCodec(client),
-                    new IntervalCodec(),
-                    new PeriodCodec(),
-                    new DurationCodec()
-                ),
-                addOptionalCodecs(classLoader)),
-            Stream.of(
-                // De-prioritized codecs, must be added after optional codecs to avoid stack overflow
-                new ArrayCodec(codecs),
-                new ParameterCodec(codecs)
-            )
-        ).collect(Collectors.toList());
-    }
+			if (codec.canEncode(value)) {
 
-    /**
-     * Adds optional {@link Codec}s based on different conditions, e.g. classpath availability.
-     *
-     * @param classLoader to scan for classes
-     * @return a {@link Stream} of additional {@link Codec}s
-     */
-    static Stream<Codec<?>> addOptionalCodecs(ClassLoader classLoader) {
-        Stream.Builder<Codec<?>> optionalCodecs = Stream.builder();
+				return codec.encode(value);
+			}
+		}
 
-        if (isPresent(classLoader, "org.locationtech.jts.geom.Geometry")) {
-            optionalCodecs.accept(new GeometryCodec());
-        }
+		throw new IllegalArgumentException(
+				String.format("Cannot encode parameter of type %s", value.getClass().getName()));
 
-        return optionalCodecs.build();
-    }
+	}
 
-    /**
-     * Checks if the class is found in the current class loader.
-     *
-     * @param classLoader             the desired ClassLoader to use
-     * @param fullyQualifiedClassName the fully qualified name of the desired class
-     * @return true, if the class is found
-     */
-    static boolean isPresent(ClassLoader classLoader, String fullyQualifiedClassName) {
-        try {
-            classLoader.loadClass(fullyQualifiedClassName);
-            return true;
-        } catch (ClassNotFoundException e) {
-            return false;
-        }
-    }
+	@Override
+	public Value encodeNull(final Class<?> type) {
+
+		Assert.requireNonNull(type, "type must not be null");
+
+		for (final Codec<?> codec : this.codecs) {
+
+			if (codec.canEncodeNull(type)) {
+
+				return codec.encodeNull();
+			}
+		}
+
+		throw new IllegalArgumentException(String.format("Cannot encode null parameter of type %s", type.getName()));
+
+	}
+
+	@Override
+	public Class<?> preferredType(final int dataType) {
+
+		if (dataType == Value.NULL) {
+
+			return Void.class;
+		}
+
+		for (final Codec<?> codec : this.codecs) {
+
+			if (codec.canDecode(dataType, Object.class)) {
+
+				return codec.type();
+			}
+		}
+
+		return null;
+
+	}
+
+	/**
+	 * Creates Default {@link Codec}s list
+	 *
+	 * @param client      for Lobs {@link Codec}s
+	 * @param classLoader to scan for classes
+	 * @param codecs      for codecs that rely on other codecs
+	 * @return a {@link List} of default {@link Codec}s
+	 */
+	static List<Codec<?>> createCodecs(final Client client, final ClassLoader classLoader, final Codecs codecs) {
+
+		return Stream.concat(
+				Stream.concat(
+						Stream.of(new BigDecimalCodec(), new BlobToByteBufferCodec(client), new BlobCodec(client),
+								new BooleanCodec(), new ByteCodec(), new BytesCodec(), new ClobToStringCodec(client),
+								new ClobCodec(client), new DoubleCodec(), new FloatCodec(), new IntegerCodec(),
+								new JsonCodec(), new LocalDateCodec(), new LocalDateTimeCodec(client),
+								new LocalTimeCodec(), new LongCodec(), new OffsetDateTimeCodec(client),
+								new OffsetTimeCodec(client), new ShortCodec(), new StringCodec(), new UuidCodec(),
+								new ZonedDateTimeCodec(client), new InstantCodec(client), new IntervalCodec(),
+								new PeriodCodec(), new DurationCodec(), new SqlTimestampCodec(), new EnumCodec()),
+						addOptionalCodecs(classLoader)),
+				Stream.of(
+						// De-prioritized codecs, must be added after optional codecs to avoid stack
+						// overflow
+						new ArrayCodec(codecs), new ParameterCodec(codecs)))
+				.collect(Collectors.toList());
+
+	}
+
+	/**
+	 * Adds optional {@link Codec}s based on different conditions, e.g. classpath
+	 * availability.
+	 *
+	 * @param classLoader to scan for classes
+	 * @return a {@link Stream} of additional {@link Codec}s
+	 */
+	static Stream<Codec<?>> addOptionalCodecs(final ClassLoader classLoader) {
+
+		final Stream.Builder<Codec<?>> optionalCodecs = Stream.builder();
+
+		if (isPresent(classLoader, "org.locationtech.jts.geom.Geometry")) {
+
+			optionalCodecs.accept(new GeometryCodec());
+		}
+
+		return optionalCodecs.build();
+
+	}
+
+	/**
+	 * Checks if the class is found in the current class loader.
+	 *
+	 * @param classLoader             the desired ClassLoader to use
+	 * @param fullyQualifiedClassName the fully qualified name of the desired class
+	 * @return true, if the class is found
+	 */
+	static boolean isPresent(final ClassLoader classLoader, final String fullyQualifiedClassName) {
+
+		try {
+
+			classLoader.loadClass(fullyQualifiedClassName);
+			return true;
+		} catch (final ClassNotFoundException e) {
+
+			return false;
+		}
+
+	}
 }
