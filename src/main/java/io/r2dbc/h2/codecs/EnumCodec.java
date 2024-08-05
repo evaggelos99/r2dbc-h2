@@ -7,28 +7,28 @@ import org.h2.value.ValueEnumBase;
 @SuppressWarnings("rawtypes")
 public class EnumCodec extends AbstractCodec<Enum> {
 
-    EnumCodec() {
-        super(Enum.class);
-    }
+	EnumCodec() {
+		super(Enum.class);
+	}
 
-    @Override
-    boolean doCanDecode(final int dataType) {
+	@Override
+	boolean doCanDecode(final int dataType) {
 
-        return Value.ENUM == dataType;
-    }
+		return Value.ENUM == dataType;
+	}
 
-    @SuppressWarnings("unchecked")
-    @Override
-    Enum doDecode(final Value value, final Class<? extends Enum> type) {
+	@SuppressWarnings("unchecked")
+	@Override
+	Enum doDecode(final Value value, final Class<? extends Enum> type) {
 
-        return Enum.valueOf(type, value.getString());
-    }
+		final ValueEnumBase valueEnumBase = (ValueEnumBase) value;
+		return Enum.valueOf(type, valueEnumBase.getString());
+	}
 
-    @Override
-    Value doEncode(final Enum value) {
+	@Override
+	Value doEncode(final Enum value) {
 
-        return ValueEnumBase.get(value.name(), value.ordinal());
-    }
-
+		return ValueEnumBase.get(value.name(), value.ordinal());
+	}
 
 }
