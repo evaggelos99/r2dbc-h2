@@ -86,7 +86,6 @@ public final class DefaultCodecs implements Codecs {
 
 		throw new IllegalArgumentException(
 				String.format("Cannot encode parameter of type %s", value.getClass().getName()));
-
 	}
 
 	@Override
@@ -137,15 +136,13 @@ public final class DefaultCodecs implements Codecs {
 	static List<Codec<?>> createCodecs(final Client client, final ClassLoader classLoader, final Codecs codecs) {
 
 		return Stream.concat(
-				Stream.concat(
-						Stream.of(new BigDecimalCodec(), new BlobToByteBufferCodec(client), new BlobCodec(client),
-								new BooleanCodec(), new ByteCodec(), new BytesCodec(), new ClobToStringCodec(client),
-								new ClobCodec(client), new DoubleCodec(), new FloatCodec(), new IntegerCodec(),
-								new JsonCodec(), new LocalDateCodec(), new LocalDateTimeCodec(client),
-								new LocalTimeCodec(), new LongCodec(), new OffsetDateTimeCodec(client),
-								new OffsetTimeCodec(client), new ShortCodec(), new StringCodec(), new UuidCodec(),
-								new ZonedDateTimeCodec(client), new InstantCodec(client), new IntervalCodec(),
-								new PeriodCodec(), new DurationCodec(), new SqlTimestampCodec(), new EnumCodec()),
+				Stream.concat(Stream.of(new BigDecimalCodec(), new BlobToByteBufferCodec(client), new BlobCodec(client),
+						new BooleanCodec(), new ByteCodec(), new BytesCodec(), new ClobToStringCodec(client),
+						new ClobCodec(client), new DoubleCodec(), new FloatCodec(), new IntegerCodec(), new JsonCodec(),
+						new LocalDateCodec(), new LocalDateTimeCodec(client), new LocalTimeCodec(), new LongCodec(),
+						new OffsetDateTimeCodec(client), new OffsetTimeCodec(client), new ShortCodec(),
+						new StringCodec(), new UuidCodec(), new ZonedDateTimeCodec(client), new InstantCodec(client),
+						new IntervalCodec(), new PeriodCodec(), new DurationCodec(), new EnumCodec(client)),
 						addOptionalCodecs(classLoader)),
 				Stream.of(
 						// De-prioritized codecs, must be added after optional codecs to avoid stack
