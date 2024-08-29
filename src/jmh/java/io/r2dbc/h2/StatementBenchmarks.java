@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package io.github.evaggelosg99.io.r2dbc.h2;
+package io.github.evaggelos99.io.r2dbc.h2;
 
 import org.junit.platform.commons.annotation.Testable;
 import org.openjdk.jmh.annotations.Benchmark;
