@@ -22,9 +22,9 @@
 
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>com.github.evaggelos99</groupId>
+    <groupId>io.github.evaggelos99</groupId>
     <artifactId>r2dbc-h2</artifactId>
-    <version>1.1.0.BUILD-SNAPSHOT</version>
+    <version>1.1.1</version>
     <packaging>jar</packaging>
 
     <name>Reactive Relational Database Connectivity - H2</name>
@@ -34,7 +34,7 @@
     <properties>
         <assertj.version>3.23.1</assertj.version>
         <h2.version>2.1.214</h2.version>
-        <java.version>17</java.version>
+        <java.version>8</java.version>
         <jmh.version>1.35</jmh.version>
         <jsr305.version>3.0.2</jsr305.version>
         <jts.version>1.16.1</jts.version>
@@ -259,7 +259,7 @@
                 <version>3.4.0</version>
                 <configuration>
                     <excludePackageNames>
-                        io.r2dbc.h2.client,io.r2dbc.h2.util
+                        io.github.evaggelosg99.io.r2dbc.h2.client,io.github.evaggelosg99.io.r2dbc.h2.util
                     </excludePackageNames>
                     <links>
                         <link>https://r2dbc.io/spec/${r2dbc-spi.version}/api/</link>
@@ -331,6 +331,15 @@
                         </goals>
                     </execution>
                 </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.sonatype.central</groupId>
+                <artifactId>central-publishing-maven-plugin</artifactId>
+                <version>0.5.0</version>
+                <extensions>true</extensions>
+                <configuration>
+                    <publishingServerId>central</publishingServerId>
+                </configuration>
             </plugin>
         </plugins>
         <resources>
@@ -443,7 +452,7 @@
             </repositories>
         </profile>
 
-        <profile>
+        <!--<profile>
             <id>snapshot</id>
             <distributionManagement>
                 <snapshotRepository>
@@ -451,77 +460,83 @@
                     <url>https://oss.sonatype.org/content/repositories/snapshots</url>
                 </snapshotRepository>
             </distributionManagement>
-        </profile>
+        </profile -->
 
         <profile>
-            <id>central</id>
+            <id>release</id>
             <build>
-                <pluginManagement>
-                    <plugins>
-
-                        <!-- Sign JARs -->
-
-                        <plugin>
-                            <groupId>org.apache.maven.plugins</groupId>
-                            <artifactId>maven-gpg-plugin</artifactId>
-                            <version>1.6</version>
-                            <executions>
-                                <execution>
-                                    <id>sign-artifacts</id>
-                                    <phase>verify</phase>
-                                    <goals>
-                                        <goal>sign</goal>
-                                    </goals>
-                                    <configuration>
-                                        <gpgArguments>
-                                            <arg>--pinentry-mode</arg>
-                                            <arg>loopback</arg>
-                                        </gpgArguments>
-                                    </configuration>
-                                </execution>
-                            </executions>
-                        </plugin>
-
-                        <!-- Deploy to Sonatype OSS Nexus -->
-
-                        <plugin>
-                            <groupId>org.sonatype.plugins</groupId>
-                            <artifactId>nexus-staging-maven-plugin</artifactId>
-                            <version>1.6.13</version>
-                            <extensions>true</extensions>
-                            <configuration>
-                                <serverId>sonatype</serverId>
-                                <nexusUrl>https://oss.sonatype.org/</nexusUrl>
-                                <autoReleaseAfterClose>false</autoReleaseAfterClose>
-                                <keepStagingRepositoryOnFailure>true</keepStagingRepositoryOnFailure>
-                                <skipStagingRepositoryClose>true</skipStagingRepositoryClose>
-                            </configuration>
-                        </plugin>
-                    </plugins>
-
-                </pluginManagement>
-
                 <plugins>
-
+                    <!-- Source -->
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-gpg-plugin</artifactId>
+                        <artifactId>maven-source-plugin</artifactId>
+                        <version>3.2.1</version>
+                        <executions>
+                            <execution>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>jar-no-fork</goal>
+                                </goals>
+                            </execution>
+                        </executions>
                     </plugin>
-
+                    <!-- Javadoc -->
                     <plugin>
-                        <groupId>org.sonatype.plugins</groupId>
-                        <artifactId>nexus-staging-maven-plugin</artifactId>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-javadoc-plugin</artifactId>
+                        <version>3.10.0</version>
+                        <configuration>
+                            <show>private</show>
+                            <nohelp>true</nohelp>
+                            <charset>UTF-8</charset>
+                            <encoding>UTF-8</encoding>
+                            <docencoding>UTF-8</docencoding>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>jar</goal>
+                                </goals>
+                            </execution>
+                        </executions>
                     </plugin>
-
+                    <!--Compiler -->
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-compiler-plugin</artifactId>
+                        <version>3.13.0</version>
+                        <configuration>
+                            <source>17</source>
+                            <target>17</target>
+                            <fork>true</fork>
+                            <verbose>true</verbose>
+                            <encoding>UTF-8</encoding>
+                        </configuration>
+                    </plugin>
+                    <!--Release -->
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-release-plugin</artifactId>
+                        <version>3.1.1</version>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.sonatype.central</groupId>
+                        <artifactId>central-publishing-maven-plugin</artifactId>
+                        <version>0.5.0</version>
+                        <extensions>true</extensions>
+                        <configuration>
+                            <publishingServerId>central</publishingServerId>
+                        </configuration>
+                    </plugin>
                 </plugins>
-
             </build>
 
             <distributionManagement>
-                <repository>
-                    <id>sonatype</id>
-                    <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
-                </repository>
+                <snapshotRepository>
+                    <id>central</id>
+                    <url>https://central.sonatype.com/</url>
+                </snapshotRepository>
             </distributionManagement>
 
         </profile>

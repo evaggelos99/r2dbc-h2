@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package io.r2dbc.h2;
+package io.github.evaggelosg99.io.r2dbc.h2;
 
 import org.openjdk.jmh.annotations.BenchmarkMode;
 import org.openjdk.jmh.annotations.Fork;
