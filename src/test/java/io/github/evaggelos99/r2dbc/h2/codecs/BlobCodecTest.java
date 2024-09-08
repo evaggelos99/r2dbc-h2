@@ -16,61 +16,58 @@
 
 package io.github.evaggelos99.r2dbc.h2.codecs;
 
-import io.github.evaggelos99.r2dbc.h2.client.Client;
-import io.github.evaggelos99.r2dbc.h2.codecs.BlobCodec;
-import io.r2dbc.spi.Blob;
-import org.h2.value.Value;
-import org.h2.value.ValueBlob;
-import org.h2.value.ValueNull;
-import org.junit.jupiter.api.Test;
-import reactor.core.publisher.Flux;
-import reactor.test.StepVerifier;
-
-import java.util.Arrays;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 import static org.mockito.Mockito.mock;
 
+import java.util.Arrays;
+
+import org.h2.value.Value;
+import org.h2.value.ValueBlob;
+import org.h2.value.ValueNull;
+import org.junit.jupiter.api.Test;
+
+import io.github.evaggelos99.r2dbc.h2.client.Client;
+import io.r2dbc.spi.Blob;
+import reactor.core.publisher.Flux;
+import reactor.test.StepVerifier;
+
 final class BlobCodecTest {
 
-    byte[] TEST_BYTES = "Hello".getBytes();
+	byte[] TEST_BYTES = "Hello".getBytes();
 
-    @Test
-    void decode() {
-        Flux.from(new BlobCodec(mock(Client.class)).decode(ValueBlob.createSmall(TEST_BYTES), Blob.class).stream())
-            .as(StepVerifier::create)
-            .expectNextMatches(byteBuffer -> {
-                assertThat(Arrays.copyOfRange(byteBuffer.array(), 0, byteBuffer.remaining())).isEqualTo(TEST_BYTES);
-                return true;
-            })
-            .verifyComplete();
-    }
+	@Test
+	void decode() {
+		Flux.from(new BlobCodec(mock(Client.class)).decode(ValueBlob.createSmall(TEST_BYTES), Blob.class).stream())
+				.as(StepVerifier::create).expectNextMatches(byteBuffer -> {
+					assertThat(Arrays.copyOfRange(byteBuffer.array(), 0, byteBuffer.remaining())).isEqualTo(TEST_BYTES);
+					return true;
+				}).verifyComplete();
+	}
 
-    @Test
-    void decodeNull() {
-        assertThat(new BlobCodec(mock(Client.class)).doDecode(null, Blob.class)).isNull();
-    }
+	@Test
+	void decodeNull() {
+		assertThat(new BlobCodec(mock(Client.class)).doDecode(null, Blob.class)).isNull();
+	}
 
-    @Test
-    void doCanDecode() {
-        BlobCodec codec = new BlobCodec(mock(Client.class));
+	@Test
+	void doCanDecode() {
+		final BlobCodec codec = new BlobCodec(mock(Client.class));
 
-        assertThat(codec.doCanDecode(Value.BLOB)).isTrue();
-        assertThat(codec.doCanDecode(Value.CLOB)).isFalse();
-        assertThat(codec.doCanDecode(Value.INTEGER)).isFalse();
-    }
+		assertThat(codec.doCanDecode(Value.BLOB)).isTrue();
+		assertThat(codec.doCanDecode(Value.CLOB)).isFalse();
+		assertThat(codec.doCanDecode(Value.INTEGER)).isFalse();
+	}
 
-    @Test
-    void doEncodeNoValue() {
-        assertThatIllegalArgumentException().isThrownBy(() -> {
-            new BlobCodec(mock(Client.class)).doEncode(null);
-        }).withMessage("value must not be null");
-    }
+	@Test
+	void doEncodeNoValue() {
+		assertThatIllegalArgumentException().isThrownBy(() -> {
+			new BlobCodec(mock(Client.class)).doEncode(null);
+		}).withMessage("value must not be null");
+	}
 
-    @Test
-    void encodeNull() {
-        assertThat(new BlobCodec(mock(Client.class)).encodeNull())
-            .isEqualTo(ValueNull.INSTANCE);
-    }
+	@Test
+	void encodeNull() {
+		assertThat(new BlobCodec(mock(Client.class)).encodeNull()).isEqualTo(ValueNull.INSTANCE);
+	}
 }

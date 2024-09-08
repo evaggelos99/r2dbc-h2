@@ -16,10 +16,10 @@
 
 package io.github.evaggelos99.r2dbc.h2;
 
-import io.github.evaggelos99.io.r2dbc.h2.codecs.MockCodecs;
-import io.github.evaggelos99.r2dbc.h2.H2DatabaseExceptionFactory;
-import io.github.evaggelos99.r2dbc.h2.H2Result;
-import io.github.evaggelos99.r2dbc.h2.H2RowMetadata;
+import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
+import static org.mockito.Mockito.RETURNS_SMART_NULLS;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import org.h2.message.DbException;
 import org.h2.result.ResultInterface;
@@ -27,82 +27,76 @@ import org.h2.value.Value;
 import org.h2.value.ValueInteger;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+
+import io.github.evaggelos99.r2dbc.h2.codecs.MockCodecs;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
-import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
-import static org.mockito.Mockito.*;
-
 final class H2ResultTest {
 
-    private final ResultInterface result = mock(ResultInterface.class, RETURNS_SMART_NULLS);
+	private final ResultInterface result = mock(ResultInterface.class, RETURNS_SMART_NULLS);
 
-    @Disabled("There are situations where null rowMetadata appears valid.")
-    @Test
-    void constructorNoRowMetadata() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new H2Result(null, Flux.empty(), Mono.empty(), Flux.empty()))
-            .withMessage("rowMetadata must not be null");
-    }
+	@Disabled("There are situations where null rowMetadata appears valid.")
+	@Test
+	void constructorNoRowMetadata() {
+		assertThatIllegalArgumentException()
+				.isThrownBy(() -> new H2Result(null, Flux.empty(), Mono.empty(), Flux.empty()))
+				.withMessage("rowMetadata must not be null");
+	}
 
-    @Test
-    void constructorNoRows() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new H2Result(mock(H2RowMetadata.class), null, Mono.empty(), Flux.empty()))
-            .withMessage("rows must not be null");
-    }
+	@Test
+	void constructorNoRows() {
+		assertThatIllegalArgumentException()
+				.isThrownBy(() -> new H2Result(mock(H2RowMetadata.class), null, Mono.empty(), Flux.empty()))
+				.withMessage("rows must not be null");
+	}
 
-    @Test
-    void constructorNoRowsUpdated() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new H2Result(mock(H2RowMetadata.class), Flux.empty(), null, Flux.empty()))
-            .withMessage("rowsUpdated must not be null");
-    }
+	@Test
+	void constructorNoRowsUpdated() {
+		assertThatIllegalArgumentException()
+				.isThrownBy(() -> new H2Result(mock(H2RowMetadata.class), Flux.empty(), null, Flux.empty()))
+				.withMessage("rowsUpdated must not be null");
+	}
 
-    @Test
-    void toResultErrorResponse() {
-        when(this.result.hasNext()).thenReturn(true, false);
-        when(this.result.next()).thenAnswer(arg -> {
-            throw DbException.get(999, "can't commit");
-        });
+	@Test
+	void toResultErrorResponse() {
+		when(this.result.hasNext()).thenReturn(true, false);
+		when(this.result.next()).thenAnswer(arg -> {
+			throw DbException.get(999, "can't commit");
+		});
 
-        H2Result result = H2Result.toResult(MockCodecs.empty(), this.result, null);
+		final H2Result result = H2Result.toResult(MockCodecs.empty(), this.result, null);
 
-        result.map((row, rowMetadata) -> row)
-            .as(StepVerifier::create)
-            .verifyError(H2DatabaseExceptionFactory.H2R2dbcException.class);
+		result.map((row, rowMetadata) -> row).as(StepVerifier::create)
+				.verifyError(H2DatabaseExceptionFactory.H2R2dbcException.class);
 
-        result.getRowsUpdated()
-            .as(StepVerifier::create)
-            .verifyComplete();
-    }
+		result.getRowsUpdated().as(StepVerifier::create).verifyComplete();
+	}
 
-    @Test
-    void toResultNoCodecs() {
-        assertThatIllegalArgumentException().isThrownBy(() -> H2Result.toResult(null, this.result, 0L))
-            .withMessage("codecs must not be null");
-    }
+	@Test
+	void toResultNoCodecs() {
+		assertThatIllegalArgumentException().isThrownBy(() -> H2Result.toResult(null, this.result, 0L))
+				.withMessage("codecs must not be null");
+	}
 
-    @Test
-    void toResultNoResult() {
-        assertThatIllegalArgumentException().isThrownBy(() -> H2Result.toResult(MockCodecs.empty(), null, 0L))
-            .withMessage("result must not be null");
-    }
+	@Test
+	void toResultNoResult() {
+		assertThatIllegalArgumentException().isThrownBy(() -> H2Result.toResult(MockCodecs.empty(), null, 0L))
+				.withMessage("result must not be null");
+	}
 
-    @Test
-    void toResultRowDescription() {
-        when(this.result.hasNext()).thenReturn(true, true, false);
-        when(this.result.currentRow()).thenReturn(new Value[]{ValueInteger.get(100)}, new Value[]{ValueInteger.get(200)});
+	@Test
+	void toResultRowDescription() {
+		when(this.result.hasNext()).thenReturn(true, true, false);
+		when(this.result.currentRow()).thenReturn(new Value[] { ValueInteger.get(100) },
+				new Value[] { ValueInteger.get(200) });
 
-        H2Result result = H2Result.toResult(MockCodecs.empty(), this.result, Long.MAX_VALUE);
+		final H2Result result = H2Result.toResult(MockCodecs.empty(), this.result, Long.MAX_VALUE);
 
-        result.map((row, rowMetadata) -> row)
-            .as(StepVerifier::create)
-            .expectNextCount(2)
-            .verifyComplete();
+		result.map((row, rowMetadata) -> row).as(StepVerifier::create).expectNextCount(2).verifyComplete();
 
-        result.getRowsUpdated()
-            .as(StepVerifier::create)
-            .expectNext(Long.MAX_VALUE)
-            .verifyComplete();
-    }
+		result.getRowsUpdated().as(StepVerifier::create).expectNext(Long.MAX_VALUE).verifyComplete();
+	}
 
 }

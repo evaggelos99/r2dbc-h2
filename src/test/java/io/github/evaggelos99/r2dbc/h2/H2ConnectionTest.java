@@ -16,364 +16,321 @@
 
 package io.github.evaggelos99.r2dbc.h2;
 
-import io.github.evaggelos99.io.r2dbc.h2.codecs.MockCodecs;
-import io.github.evaggelos99.r2dbc.h2.H2Batch;
-import io.github.evaggelos99.r2dbc.h2.H2Connection;
-import io.github.evaggelos99.r2dbc.h2.H2ConnectionMetadata;
-import io.github.evaggelos99.r2dbc.h2.H2Statement;
-import io.github.evaggelos99.r2dbc.h2.H2TransactionDefinition;
-import io.github.evaggelos99.r2dbc.h2.client.Client;
-import io.r2dbc.spi.R2dbcNonTransientException;
-import io.r2dbc.spi.R2dbcNonTransientResourceException;
-import io.r2dbc.spi.R2dbcRollbackException;
-import org.h2.engine.Constants;
-import org.h2.message.DbException;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.Test;
-import reactor.core.publisher.Mono;
-import reactor.test.StepVerifier;
+import static io.r2dbc.spi.IsolationLevel.READ_COMMITTED;
+import static io.r2dbc.spi.IsolationLevel.READ_UNCOMMITTED;
+import static io.r2dbc.spi.IsolationLevel.REPEATABLE_READ;
+import static io.r2dbc.spi.IsolationLevel.SERIALIZABLE;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
+import static org.mockito.Mockito.RETURNS_SMART_NULLS;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.when;
 
 import java.sql.SQLFeatureNotSupportedException;
 import java.sql.SQLNonTransientConnectionException;
 import java.sql.SQLTransactionRollbackException;
 import java.util.Collections;
 
-import static io.r2dbc.spi.IsolationLevel.*;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
-import static org.mockito.Mockito.*;
+import org.h2.engine.Constants;
+import org.h2.message.DbException;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+
+import io.github.evaggelos99.r2dbc.h2.client.Client;
+import io.github.evaggelos99.r2dbc.h2.codecs.MockCodecs;
+import io.r2dbc.spi.R2dbcNonTransientException;
+import io.r2dbc.spi.R2dbcNonTransientResourceException;
+import io.r2dbc.spi.R2dbcRollbackException;
+import reactor.core.publisher.Mono;
+import reactor.test.StepVerifier;
 
 final class H2ConnectionTest {
 
-    private final Client client = mock(Client.class, RETURNS_SMART_NULLS);
+	private final Client client = mock(Client.class, RETURNS_SMART_NULLS);
 
-    @BeforeEach
-    void setUp() {
-        when(this.client.prepareCommand("CALL H2VERSION()", Collections.emptyList())).thenReturn(Collections.emptyIterator());
-    }
+	@BeforeEach
+	void setUp() {
+		when(this.client.prepareCommand("CALL H2VERSION()", Collections.emptyList()))
+				.thenReturn(Collections.emptyIterator());
+	}
 
-    @Test
-    void beginTransaction() {
-        when(this.client.inTransaction()).thenReturn(false);
+	@Test
+	void beginTransaction() {
+		when(this.client.inTransaction()).thenReturn(false);
 
-        new H2Connection(this.client, MockCodecs.empty())
-            .beginTransaction()
-            .as(StepVerifier::create)
-            .verifyComplete();
-    }
+		new H2Connection(this.client, MockCodecs.empty()).beginTransaction().as(StepVerifier::create).verifyComplete();
+	}
 
-    @Test
-    void beginTransactionErrorResponse() {
-        when(this.client.inTransaction()).thenReturn(false);
-        doThrow(DbException.convert(new SQLNonTransientConnectionException("Unable to disable autocommits", "some state", 999)))
-            .when(this.client).disableAutoCommit();
+	@Test
+	void beginTransactionErrorResponse() {
+		when(this.client.inTransaction()).thenReturn(false);
+		doThrow(DbException
+				.convert(new SQLNonTransientConnectionException("Unable to disable autocommits", "some state", 999)))
+				.when(this.client).disableAutoCommit();
 
-        new H2Connection(this.client, MockCodecs.empty())
-            .beginTransaction()
-            .as(StepVerifier::create)
-            .verifyErrorMatches(R2dbcNonTransientResourceException.class::isInstance);
-    }
+		new H2Connection(this.client, MockCodecs.empty()).beginTransaction().as(StepVerifier::create)
+				.verifyErrorMatches(R2dbcNonTransientResourceException.class::isInstance);
+	}
 
-    @Test
-    void beginTransactionInTransaction() {
-        when(this.client.inTransaction()).thenReturn(true);
-        verifyNoMoreInteractions(this.client);
+	@Test
+	void beginTransactionInTransaction() {
+		when(this.client.inTransaction()).thenReturn(true);
+		verifyNoMoreInteractions(this.client);
 
-        new H2Connection(this.client, MockCodecs.empty())
-            .beginTransaction()
-            .as(StepVerifier::create)
-            .verifyComplete();
-    }
+		new H2Connection(this.client, MockCodecs.empty()).beginTransaction().as(StepVerifier::create).verifyComplete();
+	}
 
-    @Test
-    void beginTransactionWithReadOnly() {
-        when(this.client.inTransaction()).thenReturn(false);
+	@Test
+	void beginTransactionWithReadOnly() {
+		when(this.client.inTransaction()).thenReturn(false);
 
-        new H2Connection(this.client, MockCodecs.empty())
-            .beginTransaction(H2TransactionDefinition.EMPTY.with(H2TransactionDefinition.READ_ONLY, true))
-            .as(StepVerifier::create)
-            .verifyComplete();
-    }
+		new H2Connection(this.client, MockCodecs.empty())
+				.beginTransaction(H2TransactionDefinition.EMPTY.with(H2TransactionDefinition.READ_ONLY, true))
+				.as(StepVerifier::create).verifyComplete();
+	}
 
-    @Test
-    void close() {
-        when(this.client.close()).thenReturn(Mono.empty());
+	@Test
+	void close() {
+		when(this.client.close()).thenReturn(Mono.empty());
 
-        new H2Connection(this.client, MockCodecs.empty())
-            .close()
-            .as(StepVerifier::create)
-            .verifyComplete();
-    }
+		new H2Connection(this.client, MockCodecs.empty()).close().as(StepVerifier::create).verifyComplete();
+	}
 
-    @Test
-    void commitTransaction() {
-        when(this.client.inTransaction()).thenReturn(true);
+	@Test
+	void commitTransaction() {
+		when(this.client.inTransaction()).thenReturn(true);
 
-        new H2Connection(this.client, MockCodecs.empty())
-            .commitTransaction()
-            .as(StepVerifier::create)
-            .verifyComplete();
-    }
+		new H2Connection(this.client, MockCodecs.empty()).commitTransaction().as(StepVerifier::create).verifyComplete();
+	}
 
-    @Test
-    void commitTransactionErrorResponse() {
-        when(this.client.inTransaction()).thenReturn(true);
-        doThrow(DbException.convert(new SQLTransactionRollbackException("can't commit", "some state", 999)))
-            .when(this.client).execute("COMMIT");
+	@Test
+	void commitTransactionErrorResponse() {
+		when(this.client.inTransaction()).thenReturn(true);
+		doThrow(DbException.convert(new SQLTransactionRollbackException("can't commit", "some state", 999)))
+				.when(this.client).execute("COMMIT");
 
-        new H2Connection(this.client, MockCodecs.empty())
-            .commitTransaction()
-            .as(StepVerifier::create)
-            .verifyErrorMatches(R2dbcRollbackException.class::isInstance);
-    }
+		new H2Connection(this.client, MockCodecs.empty()).commitTransaction().as(StepVerifier::create)
+				.verifyErrorMatches(R2dbcRollbackException.class::isInstance);
+	}
 
-    @Test
-    void commitTransactionNonOpen() {
-        when(this.client.inTransaction()).thenReturn(false);
-        verifyNoMoreInteractions(this.client);
+	@Test
+	void commitTransactionNonOpen() {
+		when(this.client.inTransaction()).thenReturn(false);
+		verifyNoMoreInteractions(this.client);
 
-        new H2Connection(this.client, MockCodecs.empty())
-            .commitTransaction()
-            .as(StepVerifier::create)
-            .verifyComplete();
-    }
+		new H2Connection(this.client, MockCodecs.empty()).commitTransaction().as(StepVerifier::create).verifyComplete();
+	}
 
-    @Test
-    void constructorNoClient() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new H2Connection(null, MockCodecs.empty()))
-            .withMessage("client must not be null");
-    }
+	@Test
+	void constructorNoClient() {
+		assertThatIllegalArgumentException().isThrownBy(() -> new H2Connection(null, MockCodecs.empty()))
+				.withMessage("client must not be null");
+	}
 
-    @Test
-    void constructorNoCodecs() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new H2Connection(this.client, null))
-            .withMessage("codecs must not be null");
-    }
+	@Test
+	void constructorNoCodecs() {
+		assertThatIllegalArgumentException().isThrownBy(() -> new H2Connection(this.client, null))
+				.withMessage("codecs must not be null");
+	}
 
-    @Test
-    void createBatch() {
-        assertThat(new H2Connection(this.client, MockCodecs.empty()).createBatch()).isInstanceOf(H2Batch.class);
-    }
+	@Test
+	void createBatch() {
+		assertThat(new H2Connection(this.client, MockCodecs.empty()).createBatch()).isInstanceOf(H2Batch.class);
+	}
 
-    @Test
-    void createSavepoint() {
-        when(this.client.inTransaction()).thenReturn(true);
+	@Test
+	void createSavepoint() {
+		when(this.client.inTransaction()).thenReturn(true);
 
-        new H2Connection(this.client, MockCodecs.empty())
-            .createSavepoint("test-name")
-            .as(StepVerifier::create)
-            .verifyComplete();
-    }
+		new H2Connection(this.client, MockCodecs.empty()).createSavepoint("test-name").as(StepVerifier::create)
+				.verifyComplete();
+	}
 
-    @Test
-    void createSavepointErrorResponse() {
-        when(this.client.inTransaction()).thenReturn(true);
-        doThrow(DbException.convert(new SQLFeatureNotSupportedException("can't savepoint", "some state", 999)))
-            .when(this.client).execute("SAVEPOINT test-name");
+	@Test
+	void createSavepointErrorResponse() {
+		when(this.client.inTransaction()).thenReturn(true);
+		doThrow(DbException.convert(new SQLFeatureNotSupportedException("can't savepoint", "some state", 999)))
+				.when(this.client).execute("SAVEPOINT test-name");
 
-        new H2Connection(this.client, MockCodecs.empty())
-            .createSavepoint("test-name")
-            .as(StepVerifier::create)
-            .verifyErrorMatches(R2dbcNonTransientException.class::isInstance);
-    }
+		new H2Connection(this.client, MockCodecs.empty()).createSavepoint("test-name").as(StepVerifier::create)
+				.verifyErrorMatches(R2dbcNonTransientException.class::isInstance);
+	}
 
-    @Test
-    void createSavepointNoName() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new H2Connection(this.client, MockCodecs.empty()).createSavepoint(null))
-            .withMessage("name must not be null");
-    }
+	@Test
+	void createSavepointNoName() {
+		assertThatIllegalArgumentException()
+				.isThrownBy(() -> new H2Connection(this.client, MockCodecs.empty()).createSavepoint(null))
+				.withMessage("name must not be null");
+	}
 
-    @Test
-    void createSavepointNonOpen() {
-        when(this.client.inTransaction()).thenReturn(false);
-        verifyNoMoreInteractions(this.client);
+	@Test
+	void createSavepointNonOpen() {
+		when(this.client.inTransaction()).thenReturn(false);
+		verifyNoMoreInteractions(this.client);
 
-        new H2Connection(this.client, MockCodecs.empty())
-            .createSavepoint("test-name")
-            .as(StepVerifier::create)
-            .verifyComplete();
-    }
+		new H2Connection(this.client, MockCodecs.empty()).createSavepoint("test-name").as(StepVerifier::create)
+				.verifyComplete();
+	}
 
-    @Test
-    void createStatement() {
-        assertThat(new H2Connection(this.client, MockCodecs.empty()).createStatement("test-query-?")).isInstanceOf(H2Statement.class);
-    }
+	@Test
+	void createStatement() {
+		assertThat(new H2Connection(this.client, MockCodecs.empty()).createStatement("test-query-?"))
+				.isInstanceOf(H2Statement.class);
+	}
 
-    @Test
-    void releaseSavepoint() {
-        when(this.client.inTransaction()).thenReturn(true);
+	@Test
+	void releaseSavepoint() {
+		when(this.client.inTransaction()).thenReturn(true);
 
-        new H2Connection(this.client, MockCodecs.empty())
-            .releaseSavepoint("test-name")
-            .as(StepVerifier::create)
-            .verifyComplete();
-    }
+		new H2Connection(this.client, MockCodecs.empty()).releaseSavepoint("test-name").as(StepVerifier::create)
+				.verifyComplete();
+	}
 
-    @Test
-    void releaseSavepointErrorResponse() {
-        when(this.client.inTransaction()).thenReturn(true);
-        doThrow(DbException.convert(new SQLFeatureNotSupportedException("can't savepoint", "some state", 999)))
-            .when(this.client).execute("RELEASE SAVEPOINT test-name");
+	@Test
+	void releaseSavepointErrorResponse() {
+		when(this.client.inTransaction()).thenReturn(true);
+		doThrow(DbException.convert(new SQLFeatureNotSupportedException("can't savepoint", "some state", 999)))
+				.when(this.client).execute("RELEASE SAVEPOINT test-name");
 
-        new H2Connection(this.client, MockCodecs.empty())
-            .releaseSavepoint("test-name")
-            .as(StepVerifier::create)
-            .verifyErrorMatches(R2dbcNonTransientException.class::isInstance);
-    }
+		new H2Connection(this.client, MockCodecs.empty()).releaseSavepoint("test-name").as(StepVerifier::create)
+				.verifyErrorMatches(R2dbcNonTransientException.class::isInstance);
+	}
 
-    @Test
-    void releaseSavepointNoName() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new H2Connection(this.client, MockCodecs.empty()).releaseSavepoint(null))
-            .withMessage("name must not be null");
-    }
+	@Test
+	void releaseSavepointNoName() {
+		assertThatIllegalArgumentException()
+				.isThrownBy(() -> new H2Connection(this.client, MockCodecs.empty()).releaseSavepoint(null))
+				.withMessage("name must not be null");
+	}
 
-    @Test
-    void releaseSavepointNonOpen() {
-        when(this.client.inTransaction()).thenReturn(false);
-        verifyNoMoreInteractions(this.client);
+	@Test
+	void releaseSavepointNonOpen() {
+		when(this.client.inTransaction()).thenReturn(false);
+		verifyNoMoreInteractions(this.client);
 
-        new H2Connection(this.client, MockCodecs.empty())
-            .releaseSavepoint("test-name")
-            .as(StepVerifier::create)
-            .verifyComplete();
-    }
+		new H2Connection(this.client, MockCodecs.empty()).releaseSavepoint("test-name").as(StepVerifier::create)
+				.verifyComplete();
+	}
 
-    @Test
-    void rollbackTransaction() {
-        when(this.client.inTransaction()).thenReturn(true);
+	@Test
+	void rollbackTransaction() {
+		when(this.client.inTransaction()).thenReturn(true);
 
-        new H2Connection(this.client, MockCodecs.empty())
-            .rollbackTransaction()
-            .as(StepVerifier::create)
-            .verifyComplete();
-    }
+		new H2Connection(this.client, MockCodecs.empty()).rollbackTransaction().as(StepVerifier::create)
+				.verifyComplete();
+	}
 
-    @Test
-    void rollbackTransactionErrorResponse() {
-        when(this.client.inTransaction()).thenReturn(true);
-        doThrow(DbException.convert(new SQLTransactionRollbackException("can't savepoint", "some state", 999)))
-            .when(this.client).execute("ROLLBACK");
+	@Test
+	void rollbackTransactionErrorResponse() {
+		when(this.client.inTransaction()).thenReturn(true);
+		doThrow(DbException.convert(new SQLTransactionRollbackException("can't savepoint", "some state", 999)))
+				.when(this.client).execute("ROLLBACK");
 
-        new H2Connection(this.client, MockCodecs.empty())
-            .rollbackTransaction()
-            .as(StepVerifier::create)
-            .verifyErrorMatches(R2dbcRollbackException.class::isInstance);
-    }
+		new H2Connection(this.client, MockCodecs.empty()).rollbackTransaction().as(StepVerifier::create)
+				.verifyErrorMatches(R2dbcRollbackException.class::isInstance);
+	}
 
-    @Test
-    void rollbackTransactionNonOpen() {
-        when(this.client.inTransaction()).thenReturn(false);
-        verifyNoMoreInteractions(this.client);
+	@Test
+	void rollbackTransactionNonOpen() {
+		when(this.client.inTransaction()).thenReturn(false);
+		verifyNoMoreInteractions(this.client);
 
-        new H2Connection(this.client, MockCodecs.empty())
-            .rollbackTransaction()
-            .as(StepVerifier::create)
-            .verifyComplete();
-    }
+		new H2Connection(this.client, MockCodecs.empty()).rollbackTransaction().as(StepVerifier::create)
+				.verifyComplete();
+	}
 
-    @Test
-    void rollbackTransactionToSavepoint() {
-        when(this.client.inTransaction()).thenReturn(true);
+	@Test
+	void rollbackTransactionToSavepoint() {
+		when(this.client.inTransaction()).thenReturn(true);
 
-        new H2Connection(this.client, MockCodecs.empty())
-            .rollbackTransactionToSavepoint("test-name")
-            .as(StepVerifier::create)
-            .verifyComplete();
-    }
+		new H2Connection(this.client, MockCodecs.empty()).rollbackTransactionToSavepoint("test-name")
+				.as(StepVerifier::create).verifyComplete();
+	}
 
-    @Test
-    void rollbackTransactionToSavepointErrorResponse() {
-        when(this.client.inTransaction()).thenReturn(true);
-        doThrow(DbException.convert(new SQLTransactionRollbackException("can't savepoint", "some state", 999)))
-            .when(this.client).execute("ROLLBACK TO SAVEPOINT test-name");
+	@Test
+	void rollbackTransactionToSavepointErrorResponse() {
+		when(this.client.inTransaction()).thenReturn(true);
+		doThrow(DbException.convert(new SQLTransactionRollbackException("can't savepoint", "some state", 999)))
+				.when(this.client).execute("ROLLBACK TO SAVEPOINT test-name");
 
-        new H2Connection(this.client, MockCodecs.empty())
-            .rollbackTransactionToSavepoint("test-name")
-            .as(StepVerifier::create)
-            .verifyErrorMatches(R2dbcRollbackException.class::isInstance);
-    }
+		new H2Connection(this.client, MockCodecs.empty()).rollbackTransactionToSavepoint("test-name")
+				.as(StepVerifier::create).verifyErrorMatches(R2dbcRollbackException.class::isInstance);
+	}
 
-    @Test
-    void rollbackTransactionToSavepointNoName() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new H2Connection(this.client, MockCodecs.empty()).rollbackTransactionToSavepoint(null))
-            .withMessage("name must not be null");
-    }
+	@Test
+	void rollbackTransactionToSavepointNoName() {
+		assertThatIllegalArgumentException()
+				.isThrownBy(
+						() -> new H2Connection(this.client, MockCodecs.empty()).rollbackTransactionToSavepoint(null))
+				.withMessage("name must not be null");
+	}
 
-    @Test
-    void rollbackTransactionToSavepointNonOpen() {
-        when(this.client.inTransaction()).thenReturn(false);
-        verifyNoMoreInteractions(this.client);
+	@Test
+	void rollbackTransactionToSavepointNonOpen() {
+		when(this.client.inTransaction()).thenReturn(false);
+		verifyNoMoreInteractions(this.client);
 
-        new H2Connection(this.client, MockCodecs.empty())
-            .rollbackTransactionToSavepoint("test-name")
-            .as(StepVerifier::create)
-            .verifyComplete();
-    }
+		new H2Connection(this.client, MockCodecs.empty()).rollbackTransactionToSavepoint("test-name")
+				.as(StepVerifier::create).verifyComplete();
+	}
 
-    @Test
-    void setTransactionIsolationLevel() {
-        when(this.client.inTransaction()).thenReturn(true);
+	@Test
+	void setTransactionIsolationLevel() {
+		when(this.client.inTransaction()).thenReturn(true);
 
-        new H2Connection(this.client, MockCodecs.empty())
-            .setTransactionIsolationLevel(READ_COMMITTED)
-            .as(StepVerifier::create)
-            .verifyComplete();
-    }
+		new H2Connection(this.client, MockCodecs.empty()).setTransactionIsolationLevel(READ_COMMITTED)
+				.as(StepVerifier::create).verifyComplete();
+	}
 
-    @Test
-    void setTransactionIsolationLevelReadUncommitted() {
-        when(this.client.inTransaction()).thenReturn(true);
+	@Test
+	void setTransactionIsolationLevelReadUncommitted() {
+		when(this.client.inTransaction()).thenReturn(true);
 
-        new H2Connection(this.client, MockCodecs.empty())
-            .setTransactionIsolationLevel(READ_UNCOMMITTED)
-            .as(StepVerifier::create)
-            .verifyComplete();
-    }
+		new H2Connection(this.client, MockCodecs.empty()).setTransactionIsolationLevel(READ_UNCOMMITTED)
+				.as(StepVerifier::create).verifyComplete();
+	}
 
-    @Test
-    void setTransactionIsolationLevelRepeatableRead() {
-        when(this.client.inTransaction()).thenReturn(true);
+	@Test
+	void setTransactionIsolationLevelRepeatableRead() {
+		when(this.client.inTransaction()).thenReturn(true);
 
-        new H2Connection(this.client, MockCodecs.empty())
-            .setTransactionIsolationLevel(REPEATABLE_READ)
-            .as(StepVerifier::create)
-            .verifyComplete();
-    }
+		new H2Connection(this.client, MockCodecs.empty()).setTransactionIsolationLevel(REPEATABLE_READ)
+				.as(StepVerifier::create).verifyComplete();
+	}
 
-    @Test
-    void setTransactionIsolationLevelSerializable() {
-        when(this.client.inTransaction()).thenReturn(true);
+	@Test
+	void setTransactionIsolationLevelSerializable() {
+		when(this.client.inTransaction()).thenReturn(true);
 
-        new H2Connection(this.client, MockCodecs.empty())
-            .setTransactionIsolationLevel(SERIALIZABLE)
-            .as(StepVerifier::create)
-            .verifyComplete();
-    }
+		new H2Connection(this.client, MockCodecs.empty()).setTransactionIsolationLevel(SERIALIZABLE)
+				.as(StepVerifier::create).verifyComplete();
+	}
 
-    @Test
-    void getConnectionMetadata() {
-        H2ConnectionMetadata metadata = new H2Connection(this.client, MockCodecs.empty()).getMetadata();
+	@Test
+	void getConnectionMetadata() {
+		final H2ConnectionMetadata metadata = new H2Connection(this.client, MockCodecs.empty()).getMetadata();
 
-        assertThat(metadata.getDatabaseProductName()).isEqualTo("H2");
-        assertThat(metadata.getDatabaseVersion()).isEqualTo(Constants.VERSION);
-    }
+		assertThat(metadata.getDatabaseProductName()).isEqualTo("H2");
+		assertThat(metadata.getDatabaseVersion()).isEqualTo(Constants.VERSION);
+	}
 
-    @Disabled("Not yet implemented")
-    @Test
-    void setTransactionIsolationLevelErrorResponse() {
-        when(this.client.inTransaction()).thenReturn(true);
+	@Disabled("Not yet implemented")
+	@Test
+	void setTransactionIsolationLevelErrorResponse() {
+		when(this.client.inTransaction()).thenReturn(true);
 
-        new H2Connection(this.client, MockCodecs.empty())
-            .setTransactionIsolationLevel(READ_COMMITTED)
-            .as(StepVerifier::create)
-            .verifyErrorMatches(R2dbcNonTransientException.class::isInstance);
-    }
+		new H2Connection(this.client, MockCodecs.empty()).setTransactionIsolationLevel(READ_COMMITTED)
+				.as(StepVerifier::create).verifyErrorMatches(R2dbcNonTransientException.class::isInstance);
+	}
 
-    @Test
-    void setTransactionIsolationLevelNoIsolationLevel() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new H2Connection(this.client, MockCodecs.empty()).setTransactionIsolationLevel(null))
-            .withMessage("isolationLevel must not be null");
-    }
+	@Test
+	void setTransactionIsolationLevelNoIsolationLevel() {
+		assertThatIllegalArgumentException()
+				.isThrownBy(() -> new H2Connection(this.client, MockCodecs.empty()).setTransactionIsolationLevel(null))
+				.withMessage("isolationLevel must not be null");
+	}
 
 }

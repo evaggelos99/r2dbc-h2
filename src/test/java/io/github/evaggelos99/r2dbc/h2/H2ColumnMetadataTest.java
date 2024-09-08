@@ -29,11 +29,10 @@ import org.h2.value.TypeInfo;
 import org.h2.value.Value;
 import org.junit.jupiter.api.Test;
 
-import io.github.evaggelos99.io.r2dbc.h2.codecs.MockCodecs;
-import io.github.evaggelos99.r2dbc.h2.H2ColumnMetadata;
 import io.github.evaggelos99.r2dbc.h2.client.Client;
 import io.github.evaggelos99.r2dbc.h2.codecs.Codecs;
 import io.github.evaggelos99.r2dbc.h2.codecs.DefaultCodecs;
+import io.github.evaggelos99.r2dbc.h2.codecs.MockCodecs;
 
 final class H2ColumnMetadataTest {
 

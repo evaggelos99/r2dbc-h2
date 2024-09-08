@@ -29,9 +29,8 @@ import org.h2.result.LocalResult;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
-import io.github.evaggelos99.io.r2dbc.h2.codecs.MockCodecs;
-import io.github.evaggelos99.r2dbc.h2.H2Batch;
 import io.github.evaggelos99.r2dbc.h2.client.Client;
+import io.github.evaggelos99.r2dbc.h2.codecs.MockCodecs;
 import io.r2dbc.spi.R2dbcBadGrammarException;
 import reactor.test.StepVerifier;
 

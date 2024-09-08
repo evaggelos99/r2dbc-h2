@@ -16,82 +16,78 @@
 
 package io.github.evaggelos99.r2dbc.h2;
 
-import io.github.evaggelos99.r2dbc.h2.CloseableConnectionFactory;
-import io.github.evaggelos99.r2dbc.h2.H2Connection;
-import io.github.evaggelos99.r2dbc.h2.H2ConnectionFactory;
+import java.util.UUID;
+
+import org.junit.jupiter.api.Test;
+
 import io.r2dbc.spi.ConnectionFactory;
 import io.r2dbc.spi.R2dbcNonTransientResourceException;
 import io.r2dbc.spi.Result;
-import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
-import java.util.UUID;
-
 final class H2ConnectionFactoryInMemoryTest {
 
-    @Test
-    void shouldCreateInMemoryDatabase() {
+	@Test
+	void shouldCreateInMemoryDatabase() {
 
-        CloseableConnectionFactory connectionFactory = H2ConnectionFactory.inMemory(UUID.randomUUID().toString());
+		final CloseableConnectionFactory connectionFactory = H2ConnectionFactory.inMemory(UUID.randomUUID().toString());
 
-        connectionFactory.create().flatMapMany(H2Connection::close).as(StepVerifier::create).verifyComplete();
-    }
+		connectionFactory.create().flatMapMany(H2Connection::close).as(StepVerifier::create).verifyComplete();
+	}
 
-    @Test
-    void retainsStateAfterRunningCommand() {
+	@Test
+	void retainsStateAfterRunningCommand() {
 
-        CloseableConnectionFactory connectionFactory = H2ConnectionFactory.inMemory(UUID.randomUUID().toString());
+		final CloseableConnectionFactory connectionFactory = H2ConnectionFactory.inMemory(UUID.randomUUID().toString());
 
-        runCommand(connectionFactory, "CREATE TABLE lego (id INT);");
-        runCommand(connectionFactory, "INSERT INTO lego VALUES(42);");
-    }
+		runCommand(connectionFactory, "CREATE TABLE lego (id INT);");
+		runCommand(connectionFactory, "INSERT INTO lego VALUES(42);");
+	}
 
-    @Test
-    void databaseClosedAfterFactoryClose() {
+	@Test
+	void databaseClosedAfterFactoryClose() {
 
-        String database = UUID.randomUUID().toString();
-        CloseableConnectionFactory connectionFactory = H2ConnectionFactory.inMemory(database);
+		final String database = UUID.randomUUID().toString();
+		final CloseableConnectionFactory connectionFactory = H2ConnectionFactory.inMemory(database);
 
-        runCommand(connectionFactory, "CREATE TABLE lego (id INT);");
+		runCommand(connectionFactory, "CREATE TABLE lego (id INT);");
 
-        connectionFactory.close().as(StepVerifier::create).verifyComplete();
+		connectionFactory.close().as(StepVerifier::create).verifyComplete();
 
-        CloseableConnectionFactory nextInstance = H2ConnectionFactory.inMemory(database);
-        runCommand(nextInstance, "CREATE TABLE lego (id INT);");
-    }
+		final CloseableConnectionFactory nextInstance = H2ConnectionFactory.inMemory(database);
+		runCommand(nextInstance, "CREATE TABLE lego (id INT);");
+	}
 
-    @Test
-    void closedDatabaseFailsToCreateConnections() {
+	@Test
+	void closedDatabaseFailsToCreateConnections() {
 
-        String database = UUID.randomUUID().toString();
-        CloseableConnectionFactory connectionFactory = H2ConnectionFactory.inMemory(database);
+		final String database = UUID.randomUUID().toString();
+		final CloseableConnectionFactory connectionFactory = H2ConnectionFactory.inMemory(database);
 
-        runCommand(connectionFactory, "CREATE TABLE lego (id INT);");
+		runCommand(connectionFactory, "CREATE TABLE lego (id INT);");
 
-        connectionFactory.close().as(StepVerifier::create).verifyComplete();
-        connectionFactory.create().as(StepVerifier::create).verifyError(R2dbcNonTransientResourceException.class);
-    }
+		connectionFactory.close().as(StepVerifier::create).verifyComplete();
+		connectionFactory.create().as(StepVerifier::create).verifyError(R2dbcNonTransientResourceException.class);
+	}
 
-    @Test
-    void closedDatabaseShutsDownClientSessions() {
+	@Test
+	void closedDatabaseShutsDownClientSessions() {
 
-        String database = UUID.randomUUID().toString();
-        CloseableConnectionFactory connectionFactory = H2ConnectionFactory.inMemory(database);
+		final String database = UUID.randomUUID().toString();
+		final CloseableConnectionFactory connectionFactory = H2ConnectionFactory.inMemory(database);
 
-        H2Connection userSession = connectionFactory.create().block();
+		final H2Connection userSession = connectionFactory.create().block();
 
-        connectionFactory.close().as(StepVerifier::create).verifyComplete();
+		connectionFactory.close().as(StepVerifier::create).verifyComplete();
 
-        userSession.createStatement("CREATE TABLE lego (id INT);").execute().as(StepVerifier::create).verifyError(R2dbcNonTransientResourceException.class);
-    }
+		userSession.createStatement("CREATE TABLE lego (id INT);").execute().as(StepVerifier::create)
+				.verifyError(R2dbcNonTransientResourceException.class);
+	}
 
-    static void runCommand(ConnectionFactory connectionFactory, String sql) {
+	static void runCommand(final ConnectionFactory connectionFactory, final String sql) {
 
-        Mono.from(connectionFactory.create()).flatMapMany(it -> {
-            return Flux.from(it.createStatement(sql).execute()).flatMap(Result::getRowsUpdated).thenMany(it.close());
-        }).as(StepVerifier::create)
-            .verifyComplete();
-    }
+		Mono.from(connectionFactory.create()).flatMapMany(it -> Flux.from(it.createStatement(sql).execute()).flatMap(Result::getRowsUpdated).thenMany(it.close())).as(StepVerifier::create).verifyComplete();
+	}
 }

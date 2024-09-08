@@ -16,48 +16,43 @@
 
 package io.github.evaggelos99.r2dbc.h2.codecs;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
+
 import org.h2.value.Value;
 import org.h2.value.ValueDouble;
 import org.h2.value.ValueNull;
 import org.junit.jupiter.api.Test;
 
-import io.github.evaggelos99.r2dbc.h2.codecs.DoubleCodec;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
-
 final class DoubleCodecTest {
 
-    @Test
-    void decode() {
-        assertThat(new DoubleCodec().decode(ValueDouble.get(100.0d), Double.class))
-            .isEqualTo(100.0d);
-    }
+	@Test
+	void decode() {
+		assertThat(new DoubleCodec().decode(ValueDouble.get(100.0d), Double.class)).isEqualTo(100.0d);
+	}
 
-    @Test
-    void doCanDecode() {
-        DoubleCodec codec = new DoubleCodec();
+	@Test
+	void doCanDecode() {
+		DoubleCodec codec = new DoubleCodec();
 
-        assertThat(codec.doCanDecode(Value.DOUBLE)).isTrue();
-        assertThat(codec.doCanDecode(Value.UNKNOWN)).isFalse();
-        assertThat(codec.doCanDecode(Value.INTEGER)).isFalse();
-    }
+		assertThat(codec.doCanDecode(Value.DOUBLE)).isTrue();
+		assertThat(codec.doCanDecode(Value.UNKNOWN)).isFalse();
+		assertThat(codec.doCanDecode(Value.INTEGER)).isFalse();
+	}
 
-    @Test
-    void doEncode() {
-        assertThat(new DoubleCodec().doEncode(100d))
-            .isEqualTo(ValueDouble.get(100d));
-    }
+	@Test
+	void doEncode() {
+		assertThat(new DoubleCodec().doEncode(100d)).isEqualTo(ValueDouble.get(100d));
+	}
 
-    @Test
-    void doEncodeNoValue() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new DoubleCodec().doEncode(null))
-            .withMessage("value must not be null");
-    }
+	@Test
+	void doEncodeNoValue() {
+		assertThatIllegalArgumentException().isThrownBy(() -> new DoubleCodec().doEncode(null))
+				.withMessage("value must not be null");
+	}
 
-    @Test
-    void encodeNull() {
-        assertThat(new DoubleCodec().encodeNull())
-            .isEqualTo(ValueNull.INSTANCE);
-    }
+	@Test
+	void encodeNull() {
+		assertThat(new DoubleCodec().encodeNull()).isEqualTo(ValueNull.INSTANCE);
+	}
 }

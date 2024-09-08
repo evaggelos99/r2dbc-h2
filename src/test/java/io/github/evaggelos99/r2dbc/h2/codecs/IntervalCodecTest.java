@@ -16,6 +16,9 @@
 
 package io.github.evaggelos99.r2dbc.h2.codecs;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
+
 import org.h2.api.Interval;
 import org.h2.api.IntervalQualifier;
 import org.h2.value.Value;
@@ -24,75 +27,62 @@ import org.h2.value.ValueNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import io.github.evaggelos99.r2dbc.h2.codecs.IntervalCodec;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
-
 final class IntervalCodecTest {
 
-    private IntervalCodec codec;
+	private IntervalCodec codec;
 
-    @BeforeEach
-    void setUp() {
-        codec = new IntervalCodec();
-    }
+	@BeforeEach
+	void setUp() {
+		codec = new IntervalCodec();
+	}
 
-    @Test
-    void decode() {
-        ValueInterval interval = ValueInterval.from(
-            IntervalQualifier.DAY_TO_SECOND,
-            false,
-            999_999_999_999_999_999L,
-            24 * 60 * 60 * 1_000_000_000L - 1
-        );
-        Interval expected = Interval.ofDaysHoursMinutesNanos(999_999_999_999_999_999L, 23, 59, 59_999_999_999L);
-        Interval decoded = codec.decode(interval, Interval.class);
-        assertThat(decoded).isEqualTo(expected);
-    }
+	@Test
+	void decode() {
+		ValueInterval interval = ValueInterval.from(IntervalQualifier.DAY_TO_SECOND, false, 999_999_999_999_999_999L,
+				24 * 60 * 60 * 1_000_000_000L - 1);
+		Interval expected = Interval.ofDaysHoursMinutesNanos(999_999_999_999_999_999L, 23, 59, 59_999_999_999L);
+		Interval decoded = codec.decode(interval, Interval.class);
+		assertThat(decoded).isEqualTo(expected);
+	}
 
-    @Test
-    void doCanDecode() {
-        assertThat(codec.doCanDecode(Value.INTERVAL_YEAR)).isTrue();
-        assertThat(codec.doCanDecode(Value.INTERVAL_MONTH)).isTrue();
-        assertThat(codec.doCanDecode(Value.INTERVAL_DAY)).isTrue();
-        assertThat(codec.doCanDecode(Value.INTERVAL_HOUR)).isTrue();
-        assertThat(codec.doCanDecode(Value.INTERVAL_MINUTE)).isTrue();
-        assertThat(codec.doCanDecode(Value.INTERVAL_SECOND)).isTrue();
-        assertThat(codec.doCanDecode(Value.INTERVAL_YEAR_TO_MONTH)).isTrue();
-        assertThat(codec.doCanDecode(Value.INTERVAL_DAY_TO_HOUR)).isTrue();
-        assertThat(codec.doCanDecode(Value.INTERVAL_DAY_TO_MINUTE)).isTrue();
-        assertThat(codec.doCanDecode(Value.INTERVAL_DAY_TO_SECOND)).isTrue();
-        assertThat(codec.doCanDecode(Value.INTERVAL_HOUR_TO_MINUTE)).isTrue();
-        assertThat(codec.doCanDecode(Value.INTERVAL_HOUR_TO_SECOND)).isTrue();
-        assertThat(codec.doCanDecode(Value.INTERVAL_MINUTE_TO_SECOND)).isTrue();
-        assertThat(codec.doCanDecode(Value.TIMESTAMP_TZ)).isFalse();
-        assertThat(codec.doCanDecode(Value.TIMESTAMP)).isFalse();
-        assertThat(codec.doCanDecode(Value.UNKNOWN)).isFalse();
-        assertThat(codec.doCanDecode(Value.INTEGER)).isFalse();
-    }
+	@Test
+	void doCanDecode() {
+		assertThat(codec.doCanDecode(Value.INTERVAL_YEAR)).isTrue();
+		assertThat(codec.doCanDecode(Value.INTERVAL_MONTH)).isTrue();
+		assertThat(codec.doCanDecode(Value.INTERVAL_DAY)).isTrue();
+		assertThat(codec.doCanDecode(Value.INTERVAL_HOUR)).isTrue();
+		assertThat(codec.doCanDecode(Value.INTERVAL_MINUTE)).isTrue();
+		assertThat(codec.doCanDecode(Value.INTERVAL_SECOND)).isTrue();
+		assertThat(codec.doCanDecode(Value.INTERVAL_YEAR_TO_MONTH)).isTrue();
+		assertThat(codec.doCanDecode(Value.INTERVAL_DAY_TO_HOUR)).isTrue();
+		assertThat(codec.doCanDecode(Value.INTERVAL_DAY_TO_MINUTE)).isTrue();
+		assertThat(codec.doCanDecode(Value.INTERVAL_DAY_TO_SECOND)).isTrue();
+		assertThat(codec.doCanDecode(Value.INTERVAL_HOUR_TO_MINUTE)).isTrue();
+		assertThat(codec.doCanDecode(Value.INTERVAL_HOUR_TO_SECOND)).isTrue();
+		assertThat(codec.doCanDecode(Value.INTERVAL_MINUTE_TO_SECOND)).isTrue();
+		assertThat(codec.doCanDecode(Value.TIMESTAMP_TZ)).isFalse();
+		assertThat(codec.doCanDecode(Value.TIMESTAMP)).isFalse();
+		assertThat(codec.doCanDecode(Value.UNKNOWN)).isFalse();
+		assertThat(codec.doCanDecode(Value.INTEGER)).isFalse();
+	}
 
-    @Test
-    void doEncode() {
-        Interval interval = Interval.ofDaysHoursMinutesNanos(999_999_999_999_999_999L, 23, 59, 59_999_999_999L);
-        ValueInterval expected = ValueInterval.from(
-            IntervalQualifier.DAY_TO_SECOND,
-            false,
-            999_999_999_999_999_999L,
-            24 * 60 * 60 * 1_000_000_000L - 1
-        );
-        Value encoded = codec.doEncode(interval);
-        assertThat(encoded).isEqualTo(expected);
-    }
+	@Test
+	void doEncode() {
+		Interval interval = Interval.ofDaysHoursMinutesNanos(999_999_999_999_999_999L, 23, 59, 59_999_999_999L);
+		ValueInterval expected = ValueInterval.from(IntervalQualifier.DAY_TO_SECOND, false, 999_999_999_999_999_999L,
+				24 * 60 * 60 * 1_000_000_000L - 1);
+		Value encoded = codec.doEncode(interval);
+		assertThat(encoded).isEqualTo(expected);
+	}
 
-    @Test
-    void doEncodeNoValue() {
-        assertThatIllegalArgumentException().isThrownBy(() -> codec.doEncode(null))
-            .withMessage("value must not be null");
-    }
+	@Test
+	void doEncodeNoValue() {
+		assertThatIllegalArgumentException().isThrownBy(() -> codec.doEncode(null))
+				.withMessage("value must not be null");
+	}
 
-    @Test
-    void encodeNull() {
-        assertThat(codec.encodeNull()).isEqualTo(ValueNull.INSTANCE);
-    }
+	@Test
+	void encodeNull() {
+		assertThat(codec.encodeNull()).isEqualTo(ValueNull.INSTANCE);
+	}
 }

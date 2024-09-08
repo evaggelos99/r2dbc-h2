@@ -16,52 +16,48 @@
 
 package io.github.evaggelos99.r2dbc.h2.codecs;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
+
+import java.util.UUID;
+
 import org.h2.value.Value;
 import org.h2.value.ValueNull;
 import org.h2.value.ValueUuid;
 import org.junit.jupiter.api.Test;
 
-import io.github.evaggelos99.r2dbc.h2.codecs.UuidCodec;
-
-import java.util.UUID;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
-
 final class UuidCodecTest {
 
-    private static final String SAMPLE_UUID = "79e9eb45-2835-49c8-ad3b-c951b591bc7f";
+	private static final String SAMPLE_UUID = "79e9eb45-2835-49c8-ad3b-c951b591bc7f";
 
-    @Test
-    void decode() {
-        assertThat(new UuidCodec().decode(ValueUuid.get(SAMPLE_UUID), UUID.class))
-            .isEqualTo(UUID.fromString(SAMPLE_UUID));
-    }
+	@Test
+	void decode() {
+		assertThat(new UuidCodec().decode(ValueUuid.get(SAMPLE_UUID), UUID.class))
+				.isEqualTo(UUID.fromString(SAMPLE_UUID));
+	}
 
-    @Test
-    void doCanDecode() {
-        UuidCodec codec = new UuidCodec();
+	@Test
+	void doCanDecode() {
+		final UuidCodec codec = new UuidCodec();
 
-        assertThat(codec.doCanDecode(Value.UUID)).isTrue();
-        assertThat(codec.doCanDecode(Value.UNKNOWN)).isFalse();
-        assertThat(codec.doCanDecode(Value.INTEGER)).isFalse();
-    }
+		assertThat(codec.doCanDecode(Value.UUID)).isTrue();
+		assertThat(codec.doCanDecode(Value.UNKNOWN)).isFalse();
+		assertThat(codec.doCanDecode(Value.INTEGER)).isFalse();
+	}
 
-    @Test
-    void doEncode() {
-        assertThat(new UuidCodec().doEncode(UUID.fromString(SAMPLE_UUID)))
-            .isEqualTo(ValueUuid.get(SAMPLE_UUID));
-    }
+	@Test
+	void doEncode() {
+		assertThat(new UuidCodec().doEncode(UUID.fromString(SAMPLE_UUID))).isEqualTo(ValueUuid.get(SAMPLE_UUID));
+	}
 
-    @Test
-    void doEncodeNoValue() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new UuidCodec().doEncode(null))
-            .withMessage("value must not be null");
-    }
+	@Test
+	void doEncodeNoValue() {
+		assertThatIllegalArgumentException().isThrownBy(() -> new UuidCodec().doEncode(null))
+				.withMessage("value must not be null");
+	}
 
-    @Test
-    void encodeNull() {
-        assertThat(new UuidCodec().encodeNull())
-            .isEqualTo(ValueNull.INSTANCE);
-    }
+	@Test
+	void encodeNull() {
+		assertThat(new UuidCodec().encodeNull()).isEqualTo(ValueNull.INSTANCE);
+	}
 }

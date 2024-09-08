@@ -16,95 +16,75 @@
 
 package io.github.evaggelos99.r2dbc.h2;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.sql.SQLException;
+
 import org.h2.tools.Server;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.util.FileSystemUtils;
 
-import io.github.evaggelos99.r2dbc.h2.H2ConnectionConfiguration;
-import io.github.evaggelos99.r2dbc.h2.H2ConnectionFactory;
 import reactor.test.StepVerifier;
-
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.sql.SQLException;
 
 final class H2RemoteAccessTest {
 
-    Server server;
-    Path basePath;
+	Server server;
+	Path basePath;
 
-    @BeforeEach
-    void startupRemoteDatabase() throws SQLException, IOException {
-        server = Server.createTcpServer("-tcpPort", "9123", "-ifNotExists").start();
-        basePath = Files.createTempDirectory("h2-test-");
-    }
+	@BeforeEach
+	void startupRemoteDatabase() throws SQLException, IOException {
+		server = Server.createTcpServer("-tcpPort", "9123", "-ifNotExists").start();
+		basePath = Files.createTempDirectory("h2-test-");
+	}
 
-    @AfterEach
-    void shutdownRemoteDatabase() {
-        server.stop();
-    }
+	@AfterEach
+	void shutdownRemoteDatabase() {
+		server.stop();
+	}
 
-    @Test
-    void tcpByUrlWorks() throws IOException {
-        FileSystemUtils.deleteRecursively(basePath);
+	@Test
+	void tcpByUrlWorks() throws IOException {
+		FileSystemUtils.deleteRecursively(basePath);
 
-        H2ConnectionConfiguration configuration = H2ConnectionConfiguration.builder()
-            .url("tcp://localhost:9123/" + basePath)
-            .username("sa")
-            .password("")
-            .build();
+		final H2ConnectionConfiguration configuration = H2ConnectionConfiguration.builder()
+				.url("tcp://localhost:9123/" + basePath).username("sa").password("").build();
 
-        new H2ConnectionFactory(configuration).create()
-            .as(StepVerifier::create)
-            .expectNextCount(1)
-            .verifyComplete();
+		new H2ConnectionFactory(configuration).create().as(StepVerifier::create).expectNextCount(1).verifyComplete();
 
-        FileSystemUtils.deleteRecursively(basePath);
-    }
+		FileSystemUtils.deleteRecursively(basePath);
+	}
 
-    @Test
-    void tcpWithHostnameAndPortWorks() throws IOException {
-        FileSystemUtils.deleteRecursively(basePath);
+	@Test
+	void tcpWithHostnameAndPortWorks() throws IOException {
+		FileSystemUtils.deleteRecursively(basePath);
 
-        H2ConnectionConfiguration configuration = H2ConnectionConfiguration.builder()
-            .tcp("localhost", 9123, basePath.toString())
-            .username("sa")
-            .password("")
-            .build();
+		final H2ConnectionConfiguration configuration = H2ConnectionConfiguration.builder()
+				.tcp("localhost", 9123, basePath.toString()).username("sa").password("").build();
 
-        new H2ConnectionFactory(configuration).create()
-            .as(StepVerifier::create)
-            .expectNextCount(1)
-            .verifyComplete();
+		new H2ConnectionFactory(configuration).create().as(StepVerifier::create).expectNextCount(1).verifyComplete();
 
-        FileSystemUtils.deleteRecursively(basePath);
-    }
+		FileSystemUtils.deleteRecursively(basePath);
+	}
 
-    @Test
-    void tcpWithHostnameButNoPortWorks() throws IOException, SQLException {
+	@Test
+	void tcpWithHostnameButNoPortWorks() throws IOException, SQLException {
 
-        // Stopping the default one...
-        server.stop();
+		// Stopping the default one...
+		server.stop();
 
-        // ...to launch another one with the default port
-        server = Server.createTcpServer("-ifNotExists").start();
+		// ...to launch another one with the default port
+		server = Server.createTcpServer("-ifNotExists").start();
 
-        FileSystemUtils.deleteRecursively(basePath);
+		FileSystemUtils.deleteRecursively(basePath);
 
-        H2ConnectionConfiguration configuration = H2ConnectionConfiguration.builder()
-            .tcp("localhost", basePath.toString())
-            .username("sa")
-            .password("")
-            .build();
+		final H2ConnectionConfiguration configuration = H2ConnectionConfiguration.builder()
+				.tcp("localhost", basePath.toString()).username("sa").password("").build();
 
-        new H2ConnectionFactory(configuration).create()
-            .as(StepVerifier::create)
-            .expectNextCount(1)
-            .verifyComplete();
+		new H2ConnectionFactory(configuration).create().as(StepVerifier::create).expectNextCount(1).verifyComplete();
 
-        FileSystemUtils.deleteRecursively(basePath);
-    }
+		FileSystemUtils.deleteRecursively(basePath);
+	}
 }

@@ -16,52 +16,47 @@
 
 package io.github.evaggelos99.r2dbc.h2.codecs;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
+
+import java.math.BigDecimal;
+
 import org.h2.value.Value;
 import org.h2.value.ValueNull;
 import org.h2.value.ValueNumeric;
 import org.junit.jupiter.api.Test;
 
-import io.github.evaggelos99.r2dbc.h2.codecs.BigDecimalCodec;
-
-import java.math.BigDecimal;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
-
 final class BigDecimalCodecTest {
 
-    private final BigDecimal BIG = new BigDecimal(Integer.MAX_VALUE).add(new BigDecimal(Integer.MAX_VALUE));
+	private final BigDecimal BIG = new BigDecimal(Integer.MAX_VALUE).add(new BigDecimal(Integer.MAX_VALUE));
 
-    @Test
-    void decode() {
-        assertThat(new BigDecimalCodec().decode(ValueNumeric.get(BIG), BigDecimal.class))
-            .isEqualTo(BIG);
-    }
+	@Test
+	void decode() {
+		assertThat(new BigDecimalCodec().decode(ValueNumeric.get(BIG), BigDecimal.class)).isEqualTo(BIG);
+	}
 
-    @Test
-    void doCanDecode() {
-        BigDecimalCodec codec = new BigDecimalCodec();
+	@Test
+	void doCanDecode() {
+		final BigDecimalCodec codec = new BigDecimalCodec();
 
-        assertThat(codec.doCanDecode(Value.NUMERIC)).isTrue();
-        assertThat(codec.doCanDecode(Value.UNKNOWN)).isFalse();
-        assertThat(codec.doCanDecode(Value.INTEGER)).isFalse();
-    }
+		assertThat(codec.doCanDecode(Value.NUMERIC)).isTrue();
+		assertThat(codec.doCanDecode(Value.UNKNOWN)).isFalse();
+		assertThat(codec.doCanDecode(Value.INTEGER)).isFalse();
+	}
 
-    @Test
-    void doEncode() {
-        assertThat(new BigDecimalCodec().doEncode(BIG))
-            .isEqualTo(ValueNumeric.get(BIG));
-    }
+	@Test
+	void doEncode() {
+		assertThat(new BigDecimalCodec().doEncode(BIG)).isEqualTo(ValueNumeric.get(BIG));
+	}
 
-    @Test
-    void doEncodeNoValue() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new BigDecimalCodec().doEncode(null))
-            .withMessage("value must not be null");
-    }
+	@Test
+	void doEncodeNoValue() {
+		assertThatIllegalArgumentException().isThrownBy(() -> new BigDecimalCodec().doEncode(null))
+				.withMessage("value must not be null");
+	}
 
-    @Test
-    void encodeNull() {
-        assertThat(new BigDecimalCodec().encodeNull())
-            .isEqualTo(ValueNull.INSTANCE);
-    }
+	@Test
+	void encodeNull() {
+		assertThat(new BigDecimalCodec().encodeNull()).isEqualTo(ValueNull.INSTANCE);
+	}
 }

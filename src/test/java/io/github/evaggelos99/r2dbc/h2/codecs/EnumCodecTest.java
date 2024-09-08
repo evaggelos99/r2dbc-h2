@@ -11,7 +11,6 @@ import org.h2.value.ValueEnum;
 import org.junit.jupiter.api.Test;
 
 import io.github.evaggelos99.r2dbc.h2.client.Client;
-import io.github.evaggelos99.r2dbc.h2.codecs.EnumCodec;
 
 class EnumCodecTest {
 

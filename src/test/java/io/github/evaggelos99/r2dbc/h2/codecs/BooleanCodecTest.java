@@ -16,47 +16,42 @@
 
 package io.github.evaggelos99.r2dbc.h2.codecs;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
+
 import org.h2.value.Value;
 import org.h2.value.ValueBoolean;
 import org.h2.value.ValueNull;
 import org.junit.jupiter.api.Test;
 
-import io.github.evaggelos99.r2dbc.h2.codecs.BooleanCodec;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
-
 final class BooleanCodecTest {
 
-    @Test
-    void decode() {
-        assertThat(new BooleanCodec().decode(ValueBoolean.get(false), Boolean.class))
-            .isEqualTo(false);
-    }
+	@Test
+	void decode() {
+		assertThat(new BooleanCodec().decode(ValueBoolean.get(false), Boolean.class)).isEqualTo(false);
+	}
 
-    @Test
-    void doCanDecode() {
-        BooleanCodec codec = new BooleanCodec();
+	@Test
+	void doCanDecode() {
+		BooleanCodec codec = new BooleanCodec();
 
-        assertThat(codec.doCanDecode(Value.BOOLEAN)).isTrue();
-        assertThat(codec.doCanDecode(Value.INTEGER)).isFalse();
-    }
+		assertThat(codec.doCanDecode(Value.BOOLEAN)).isTrue();
+		assertThat(codec.doCanDecode(Value.INTEGER)).isFalse();
+	}
 
-    @Test
-    void doEncode() {
-        assertThat(new BooleanCodec().doEncode(true))
-            .isEqualTo(ValueBoolean.get(true));
-    }
+	@Test
+	void doEncode() {
+		assertThat(new BooleanCodec().doEncode(true)).isEqualTo(ValueBoolean.get(true));
+	}
 
-    @Test
-    void doEncodeNoValue() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new BooleanCodec().doEncode(null))
-            .withMessage("value must not be null");
-    }
+	@Test
+	void doEncodeNoValue() {
+		assertThatIllegalArgumentException().isThrownBy(() -> new BooleanCodec().doEncode(null))
+				.withMessage("value must not be null");
+	}
 
-    @Test
-    void encodeNull() {
-        assertThat(new BooleanCodec().encodeNull())
-            .isEqualTo(ValueNull.INSTANCE);
-    }
+	@Test
+	void encodeNull() {
+		assertThat(new BooleanCodec().encodeNull()).isEqualTo(ValueNull.INSTANCE);
+	}
 }

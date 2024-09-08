@@ -16,153 +16,113 @@
 
 package io.github.evaggelos99.r2dbc.h2;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.springframework.util.FileSystemUtils;
-
-import io.github.evaggelos99.r2dbc.h2.H2ConnectionConfiguration;
-import io.github.evaggelos99.r2dbc.h2.H2ConnectionFactory;
-import io.github.evaggelos99.r2dbc.h2.H2ConnectionOption;
-import io.github.evaggelos99.r2dbc.h2.client.Client;
-import reactor.core.publisher.Mono;
-import reactor.test.StepVerifier;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.util.FileSystemUtils;
+
+import io.github.evaggelos99.r2dbc.h2.client.Client;
+import reactor.core.publisher.Mono;
+import reactor.test.StepVerifier;
 
 final class H2ConnectionFactoryTest {
 
-    Path basePath;
+	Path basePath;
 
-    @BeforeEach
-    void setUp() throws IOException {
-        basePath = Files.createTempDirectory("h2-test-");
-    }
+	@BeforeEach
+	void setUp() throws IOException {
+		basePath = Files.createTempDirectory("h2-test-");
+	}
 
-    @Test
-    void constructorNoClientFactory() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new H2ConnectionFactory((Mono<? extends Client>) null))
-            .withMessage("clientFactory must not be null");
-    }
+	@Test
+	void constructorNoClientFactory() {
+		assertThatIllegalArgumentException().isThrownBy(() -> new H2ConnectionFactory((Mono<? extends Client>) null))
+				.withMessage("clientFactory must not be null");
+	}
 
-    @Test
-    void create() {
-        H2ConnectionConfiguration configuration = H2ConnectionConfiguration.builder()
-            .url("mem:foo")
-            .username("sa")
-            .password("")
-            .build();
+	@Test
+	void create() {
+		final H2ConnectionConfiguration configuration = H2ConnectionConfiguration.builder().url("mem:foo")
+				.username("sa").password("").build();
 
-        new H2ConnectionFactory(configuration).create()
-            .as(StepVerifier::create)
-            .expectNextCount(1)
-            .verifyComplete();
-    }
+		new H2ConnectionFactory(configuration).create().as(StepVerifier::create).expectNextCount(1).verifyComplete();
+	}
 
-    @Test
-    void createFileBasedDatabase() throws IOException {
-        FileSystemUtils.deleteRecursively(basePath);
+	@Test
+	void createFileBasedDatabase() throws IOException {
+		FileSystemUtils.deleteRecursively(basePath);
 
-        H2ConnectionConfiguration configuration = H2ConnectionConfiguration.builder()
-            .file(basePath.toString())
-            .username("sa")
-            .password("")
-            .build();
+		final H2ConnectionConfiguration configuration = H2ConnectionConfiguration.builder().file(basePath.toString())
+				.username("sa").password("").build();
 
-        new H2ConnectionFactory(configuration).create()
-            .as(StepVerifier::create)
-            .expectNextCount(1)
-            .verifyComplete();
+		new H2ConnectionFactory(configuration).create().as(StepVerifier::create).expectNextCount(1).verifyComplete();
 
-        FileSystemUtils.deleteRecursively(basePath);
-    }
+		FileSystemUtils.deleteRecursively(basePath);
+	}
 
-    @Test
-    void createInMemoryDatabase() {
-        H2ConnectionConfiguration configuration = H2ConnectionConfiguration.builder()
-            .inMemory("in-memory-named-database")
-            .username("sa")
-            .password("")
-            .build();
+	@Test
+	void createInMemoryDatabase() {
+		final H2ConnectionConfiguration configuration = H2ConnectionConfiguration.builder()
+				.inMemory("in-memory-named-database").username("sa").password("").build();
 
-        new H2ConnectionFactory(configuration).create()
-            .as(StepVerifier::create)
-            .expectNextCount(1)
-            .verifyComplete();
-    }
+		new H2ConnectionFactory(configuration).create().as(StepVerifier::create).expectNextCount(1).verifyComplete();
+	}
 
-    @Test
-    void getMetadata() {
-        H2ConnectionConfiguration configuration = H2ConnectionConfiguration.builder()
-            .url("mem")
-            .build();
+	@Test
+	void getMetadata() {
+		final H2ConnectionConfiguration configuration = H2ConnectionConfiguration.builder().url("mem").build();
 
-        assertThat(new H2ConnectionFactory(configuration).getMetadata()).isNotNull();
-    }
+		assertThat(new H2ConnectionFactory(configuration).getMetadata()).isNotNull();
+	}
 
-    @Test
-    void options() {
-        H2ConnectionConfiguration configuration = H2ConnectionConfiguration.builder()
-            .inMemory("in-memory-db")
-            .option("DB_CLOSE_DELAY=10")
-            .build();
+	@Test
+	void options() {
+		final H2ConnectionConfiguration configuration = H2ConnectionConfiguration.builder().inMemory("in-memory-db")
+				.option("DB_CLOSE_DELAY=10").build();
 
-        assertThat(configuration.getUrl()).isEqualTo("mem:in-memory-db;DB_CLOSE_DELAY=10");
-    }
+		assertThat(configuration.getUrl()).isEqualTo("mem:in-memory-db;DB_CLOSE_DELAY=10");
+	}
 
-    @Test
-    void individualOptions() {
-        H2ConnectionConfiguration configuration = H2ConnectionConfiguration.builder()
-            .inMemory("in-memory-db")
-            .property("DB_CLOSE_DELAY", "10")
-            .build();
+	@Test
+	void individualOptions() {
+		final H2ConnectionConfiguration configuration = H2ConnectionConfiguration.builder().inMemory("in-memory-db")
+				.property("DB_CLOSE_DELAY", "10").build();
 
-        assertThat(configuration.getProperties()).containsEntry("DB_CLOSE_DELAY", "10");
-    }
+		assertThat(configuration.getProperties()).containsEntry("DB_CLOSE_DELAY", "10");
+	}
 
-    @Test
-    void individualOptionsAsEnum() {
-        H2ConnectionConfiguration configuration = H2ConnectionConfiguration.builder()
-            .inMemory("in-memory-db")
-            .property(H2ConnectionOption.DB_CLOSE_DELAY, "10")
-            .build();
+	@Test
+	void individualOptionsAsEnum() {
+		final H2ConnectionConfiguration configuration = H2ConnectionConfiguration.builder().inMemory("in-memory-db")
+				.property(H2ConnectionOption.DB_CLOSE_DELAY, "10").build();
 
-        assertThat(configuration.getProperties()).containsEntry("DB_CLOSE_DELAY", "10");
-    }
+		assertThat(configuration.getProperties()).containsEntry("DB_CLOSE_DELAY", "10");
+	}
 
-    @Test
-    void invalidOptions() {
-        assertThatIllegalArgumentException().isThrownBy(() -> {
-            H2ConnectionConfiguration.builder()
-                .inMemory("in-memory-db")
-                .property((String) null, "bar")
-                .build();
-        }).withMessageContaining("option must not be null");
+	@Test
+	void invalidOptions() {
+		assertThatIllegalArgumentException().isThrownBy(() -> {
+			H2ConnectionConfiguration.builder().inMemory("in-memory-db").property((String) null, "bar").build();
+		}).withMessageContaining("option must not be null");
 
-        assertThatIllegalArgumentException().isThrownBy(() -> {
-            H2ConnectionConfiguration.builder()
-                .inMemory("in-memory-db")
-                .property("some property", null)
-                .build();
-        }).withMessageContaining("value must not be null");
+		assertThatIllegalArgumentException().isThrownBy(() -> {
+			H2ConnectionConfiguration.builder().inMemory("in-memory-db").property("some property", null).build();
+		}).withMessageContaining("value must not be null");
 
-        assertThatIllegalArgumentException().isThrownBy(() -> {
-            H2ConnectionConfiguration.builder()
-                .inMemory("in-memory-db")
-                .property((H2ConnectionOption) null, "bar")
-                .build();
-        }).withMessageContaining("option must not be null");
+		assertThatIllegalArgumentException().isThrownBy(() -> {
+			H2ConnectionConfiguration.builder().inMemory("in-memory-db").property((H2ConnectionOption) null, "bar")
+					.build();
+		}).withMessageContaining("option must not be null");
 
-        assertThatIllegalArgumentException().isThrownBy(() -> {
-            H2ConnectionConfiguration.builder()
-                .inMemory("in-memory-db")
-                .property(H2ConnectionOption.DB_CLOSE_DELAY, null)
-                .build();
-        }).withMessageContaining("value must not be null");
-    }
+		assertThatIllegalArgumentException().isThrownBy(() -> {
+			H2ConnectionConfiguration.builder().inMemory("in-memory-db")
+					.property(H2ConnectionOption.DB_CLOSE_DELAY, null).build();
+		}).withMessageContaining("value must not be null");
+	}
 }

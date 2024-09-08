@@ -16,52 +16,47 @@
 
 package io.github.evaggelos99.r2dbc.h2.codecs;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
+
 import org.h2.value.Value;
 import org.h2.value.ValueBinary;
 import org.h2.value.ValueNull;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
-import io.github.evaggelos99.r2dbc.h2.codecs.ByteCodec;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
-
 @Disabled
 final class ByteCodecTest {
 
-    byte TEST_BYTE = Byte.parseByte("1111", 2);
-    byte[] TEST_BYTES = new byte[]{TEST_BYTE};
+	byte TEST_BYTE = Byte.parseByte("1111", 2);
+	byte[] TEST_BYTES = new byte[] { TEST_BYTE };
 
-    @Test
-    void decode() {
-        assertThat(new ByteCodec().decode(ValueBinary.get(TEST_BYTES), Byte.class))
-            .isEqualTo(TEST_BYTE);
-    }
+	@Test
+	void decode() {
+		assertThat(new ByteCodec().decode(ValueBinary.get(TEST_BYTES), Byte.class)).isEqualTo(TEST_BYTE);
+	}
 
-    @Test
-    void doCanDecode() {
-        ByteCodec codec = new ByteCodec();
+	@Test
+	void doCanDecode() {
+		ByteCodec codec = new ByteCodec();
 
-        assertThat(codec.doCanDecode(Value.BINARY)).isTrue();
-        assertThat(codec.doCanDecode(Value.INTEGER)).isFalse();
-    }
+		assertThat(codec.doCanDecode(Value.BINARY)).isTrue();
+		assertThat(codec.doCanDecode(Value.INTEGER)).isFalse();
+	}
 
-    @Test
-    void doEncode() {
-        assertThat(new ByteCodec().doEncode(TEST_BYTE))
-            .isEqualTo(ValueBinary.get(TEST_BYTES));
-    }
+	@Test
+	void doEncode() {
+		assertThat(new ByteCodec().doEncode(TEST_BYTE)).isEqualTo(ValueBinary.get(TEST_BYTES));
+	}
 
-    @Test
-    void doEncodeNoValue() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new ByteCodec().doEncode(null))
-            .withMessage("value must not be null");
-    }
+	@Test
+	void doEncodeNoValue() {
+		assertThatIllegalArgumentException().isThrownBy(() -> new ByteCodec().doEncode(null))
+				.withMessage("value must not be null");
+	}
 
-    @Test
-    void encodeNull() {
-        assertThat(new ByteCodec().encodeNull())
-            .isEqualTo(ValueNull.INSTANCE);
-    }
+	@Test
+	void encodeNull() {
+		assertThat(new ByteCodec().encodeNull()).isEqualTo(ValueNull.INSTANCE);
+	}
 }

@@ -20,7 +20,6 @@ import java.time.Duration;
 import java.util.Iterator;
 import java.util.List;
 
-import net.minidev.json.JSONArray;
 import org.springframework.hateoas.IanaLinkRelations;
 import org.springframework.hateoas.Links;
 import org.springframework.http.HttpEntity;
@@ -29,71 +28,74 @@ import org.springframework.web.reactive.function.client.WebClient;
 
 import com.jayway.jsonpath.JsonPath;
 
+import net.minidev.json.JSONArray;
+
 /**
  * Changelog report generator.
  */
 final class ChangeLogReportGenerator {
 
-    private static final int MILESTONE_ID = 18;
-    private static final String URI_TEMPLATE = "https://api.github.com/repos/r2dbc/r2dbc-h2/issues?milestone={id}&state=closed";
+	private static final int MILESTONE_ID = 18;
+	private static final String URI_TEMPLATE = "https://api.github.com/repos/r2dbc/r2dbc-h2/issues?milestone={id}&state=closed";
 
-    public static void main(String... args) {
+	public static void main(final String... args) {
 
-        /*
-         * If you run into github rate limiting issues, you can always use a Github Personal Token by adding
-         * {@code .header(HttpHeaders.AUTHORIZATION, "token your-github-token")} to the webClient call.
-         */
+		/*
+		 * If you run into github rate limiting issues, you can always use a Github
+		 * Personal Token by adding {@code .header(HttpHeaders.AUTHORIZATION,
+		 * "token your-github-token")} to the webClient call.
+		 */
 
-        WebClient webClient = WebClient.create();
+		final WebClient webClient = WebClient.create();
 
-        HttpEntity<String> response = webClient //
-            .get().uri(URI_TEMPLATE, MILESTONE_ID) //
-            .exchange() //
-            .flatMap(clientResponse -> clientResponse.toEntity(String.class)) //
-            .block(Duration.ofSeconds(10));
+		HttpEntity<String> response = webClient //
+				.get().uri(URI_TEMPLATE, MILESTONE_ID) //
+				.exchange() //
+				.flatMap(clientResponse -> clientResponse.toEntity(String.class)) //
+				.block(Duration.ofSeconds(10));
 
-        boolean keepChecking = true;
-        boolean printHeader = true;
+		boolean keepChecking = true;
+		boolean printHeader = true;
 
-        while (keepChecking) {
+		while (keepChecking) {
 
-            readPage(response.getBody(), printHeader);
-            printHeader = false;
+			readPage(response.getBody(), printHeader);
+			printHeader = false;
 
-            List<String> linksInHeader = response.getHeaders().get(HttpHeaders.LINK);
-            Links links = linksInHeader == null ? Links.NONE : Links.parse(linksInHeader.get(0));
+			final List<String> linksInHeader = response.getHeaders().get(HttpHeaders.LINK);
+			final Links links = linksInHeader == null ? Links.NONE : Links.parse(linksInHeader.get(0));
 
-            if (links.getLink(IanaLinkRelations.NEXT).isPresent()) {
+			if (links.getLink(IanaLinkRelations.NEXT).isPresent()) {
 
-                response = webClient //
-                    .get().uri(links.getRequiredLink(IanaLinkRelations.NEXT).expand().getHref()) //
-                    .exchange() //
-                    .flatMap(clientResponse -> clientResponse.toEntity(String.class)) //
-                    .block(Duration.ofSeconds(10));
+				response = webClient //
+						.get().uri(links.getRequiredLink(IanaLinkRelations.NEXT).expand().getHref()) //
+						.exchange() //
+						.flatMap(clientResponse -> clientResponse.toEntity(String.class)) //
+						.block(Duration.ofSeconds(10));
 
-            } else {
-                keepChecking = false;
-            }
-        }
-    }
+			} else {
+				keepChecking = false;
+			}
+		}
+	}
 
-    private static void readPage(String content, boolean header) {
+	private static void readPage(final String content, final boolean header) {
 
-        JsonPath titlePath = JsonPath.compile("$[*].title");
-        JsonPath idPath = JsonPath.compile("$[*].number");
+		final JsonPath titlePath = JsonPath.compile("$[*].title");
+		final JsonPath idPath = JsonPath.compile("$[*].number");
 
-        JSONArray titles = titlePath.read(content);
-        Iterator<Object> ids = ((JSONArray) idPath.read(content)).iterator();
+		final JSONArray titles = titlePath.read(content);
+		final Iterator<Object> ids = ((JSONArray) idPath.read(content)).iterator();
 
-        if (header) {
-            System.out.println(JsonPath.read(content, "$[1].milestone.title").toString());
-            System.out.println("------------------");
-        }
+		if (header) {
+			System.out.println(JsonPath.read(content, "$[1].milestone.title").toString());
+			System.out.println("------------------");
+		}
 
-        for (Object title : titles) {
+		for (final Object title : titles) {
 
-            String format = String.format("* %s #%s", title, ids.next());
-            System.out.println(format.endsWith(".") ? format : format.concat("."));
-        }
-    }
+			final String format = String.format("* %s #%s", title, ids.next());
+			System.out.println(format.endsWith(".") ? format : format.concat("."));
+		}
+	}
 }

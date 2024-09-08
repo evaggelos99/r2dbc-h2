@@ -35,10 +35,9 @@ import java.util.function.Consumer;
 import org.h2.api.Interval;
 import org.junit.jupiter.api.Test;
 
-import io.github.evaggelos99.io.r2dbc.h2.util.IntegrationTestSupport;
 import io.github.evaggelos99.r2dbc.h2.H2Connection;
 import io.github.evaggelos99.r2dbc.h2.H2Result;
-import io.github.evaggelos99.r2dbc.h2.codecs.DefaultCodecs;
+import io.github.evaggelos99.r2dbc.h2.util.IntegrationTestSupport;
 import io.r2dbc.spi.Parameter;
 import io.r2dbc.spi.Parameters;
 import reactor.core.publisher.Flux;

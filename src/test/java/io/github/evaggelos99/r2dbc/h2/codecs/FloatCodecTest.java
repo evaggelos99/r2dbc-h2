@@ -16,48 +16,43 @@
 
 package io.github.evaggelos99.r2dbc.h2.codecs;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
+
 import org.h2.value.Value;
 import org.h2.value.ValueNull;
 import org.h2.value.ValueReal;
 import org.junit.jupiter.api.Test;
 
-import io.github.evaggelos99.r2dbc.h2.codecs.FloatCodec;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
-
 final class FloatCodecTest {
 
-    @Test
-    void decode() {
-        assertThat(new FloatCodec().decode(ValueReal.get(100.0f), Float.class))
-            .isEqualTo(100.0f);
-    }
+	@Test
+	void decode() {
+		assertThat(new FloatCodec().decode(ValueReal.get(100.0f), Float.class)).isEqualTo(100.0f);
+	}
 
-    @Test
-    void doCanDecode() {
-        FloatCodec codec = new FloatCodec();
+	@Test
+	void doCanDecode() {
+		FloatCodec codec = new FloatCodec();
 
-        assertThat(codec.doCanDecode(Value.REAL)).isTrue();
-        assertThat(codec.doCanDecode(Value.UNKNOWN)).isFalse();
-        assertThat(codec.doCanDecode(Value.INTEGER)).isFalse();
-    }
+		assertThat(codec.doCanDecode(Value.REAL)).isTrue();
+		assertThat(codec.doCanDecode(Value.UNKNOWN)).isFalse();
+		assertThat(codec.doCanDecode(Value.INTEGER)).isFalse();
+	}
 
-    @Test
-    void doEncode() {
-        assertThat(new FloatCodec().doEncode(100f))
-            .isEqualTo(ValueReal.get(100f));
-    }
+	@Test
+	void doEncode() {
+		assertThat(new FloatCodec().doEncode(100f)).isEqualTo(ValueReal.get(100f));
+	}
 
-    @Test
-    void doEncodeNoValue() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new FloatCodec().doEncode(null))
-            .withMessage("value must not be null");
-    }
+	@Test
+	void doEncodeNoValue() {
+		assertThatIllegalArgumentException().isThrownBy(() -> new FloatCodec().doEncode(null))
+				.withMessage("value must not be null");
+	}
 
-    @Test
-    void encodeNull() {
-        assertThat(new FloatCodec().encodeNull())
-            .isEqualTo(ValueNull.INSTANCE);
-    }
+	@Test
+	void encodeNull() {
+		assertThat(new FloatCodec().encodeNull()).isEqualTo(ValueNull.INSTANCE);
+	}
 }

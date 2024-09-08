@@ -16,31 +16,30 @@
 
 package io.github.evaggelos99.r2dbc.h2;
 
-import org.h2.engine.ConnectionInfo;
-import org.h2.engine.Constants;
-import org.junit.jupiter.api.Test;
-
-import io.github.evaggelos99.r2dbc.h2.H2Connection;
-import io.github.evaggelos99.r2dbc.h2.H2ConnectionMetadata;
-import io.github.evaggelos99.r2dbc.h2.client.SessionClient;
-import io.github.evaggelos99.r2dbc.h2.codecs.DefaultCodecs;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.Properties;
 import java.util.UUID;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import org.h2.engine.ConnectionInfo;
+import org.h2.engine.Constants;
+import org.junit.jupiter.api.Test;
+
+import io.github.evaggelos99.r2dbc.h2.client.SessionClient;
+import io.github.evaggelos99.r2dbc.h2.codecs.DefaultCodecs;
 
 final class H2ConnectionIntegrationTest {
 
-    @Test
-    void getMetadata() {
+	@Test
+	void getMetadata() {
 
-        ConnectionInfo configuration = new ConnectionInfo("jdbc:h2:mem:" + UUID.randomUUID().toString() + ";USER=sa;PASSWORD=sa;", new Properties(), null, null);
-        SessionClient sessionClient = new SessionClient(configuration, false);
+		final ConnectionInfo configuration = new ConnectionInfo(
+				"jdbc:h2:mem:" + UUID.randomUUID().toString() + ";USER=sa;PASSWORD=sa;", new Properties(), null, null);
+		final SessionClient sessionClient = new SessionClient(configuration, false);
 
-        H2Connection connection = new H2Connection(sessionClient, new DefaultCodecs(sessionClient));
-        H2ConnectionMetadata metadata = connection.getMetadata();
+		final H2Connection connection = new H2Connection(sessionClient, new DefaultCodecs(sessionClient));
+		final H2ConnectionMetadata metadata = connection.getMetadata();
 
-        assertThat(metadata.getDatabaseVersion()).isEqualTo(Constants.VERSION);
-    }
+		assertThat(metadata.getDatabaseVersion()).isEqualTo(Constants.VERSION);
+	}
 }

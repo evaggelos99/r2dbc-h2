@@ -16,17 +16,15 @@
 
 package io.github.evaggelos99.r2dbc.h2;
 
-import org.junit.jupiter.api.Test;
-
-import io.github.evaggelos99.r2dbc.h2.H2ConnectionFactoryMetadata;
-
 import static org.assertj.core.api.Assertions.assertThat;
+
+import org.junit.jupiter.api.Test;
 
 final class H2ConnectionFactoryMetadataTest {
 
-    @Test
-    void name() {
-        assertThat(H2ConnectionFactoryMetadata.INSTANCE.getName()).isEqualTo(H2ConnectionFactoryMetadata.NAME);
-    }
+	@Test
+	void name() {
+		assertThat(H2ConnectionFactoryMetadata.INSTANCE.getName()).isEqualTo(H2ConnectionFactoryMetadata.NAME);
+	}
 
 }

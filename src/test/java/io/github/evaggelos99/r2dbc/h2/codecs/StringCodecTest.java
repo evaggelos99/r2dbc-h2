@@ -16,56 +16,54 @@
 
 package io.github.evaggelos99.r2dbc.h2.codecs;
 
-import org.h2.value.*;
-import org.junit.jupiter.api.Test;
-
-import io.github.evaggelos99.r2dbc.h2.codecs.StringCodec;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
+import org.h2.value.Value;
+import org.h2.value.ValueEnumBase;
+import org.h2.value.ValueNull;
+import org.h2.value.ValueVarchar;
+import org.junit.jupiter.api.Test;
+
 final class StringCodecTest {
 
-    @Test
-    void decode() {
-        assertThat(new StringCodec().decode(ValueVarchar.get("test"), String.class))
-            .isEqualTo("test");
-    }
+	@Test
+	void decode() {
+		assertThat(new StringCodec().decode(ValueVarchar.get("test"), String.class)).isEqualTo("test");
+	}
 
-    @Test
-    void doCanDecode() {
-        StringCodec codec = new StringCodec();
+	@Test
+	void doCanDecode() {
+		StringCodec codec = new StringCodec();
 
-        assertThat(codec.doCanDecode(Value.VARCHAR)).isTrue();
-        assertThat(codec.doCanDecode(Value.VARCHAR_IGNORECASE)).isTrue();
-        assertThat(codec.doCanDecode(Value.UNKNOWN)).isFalse();
-        assertThat(codec.doCanDecode(Value.INTEGER)).isFalse();
-        assertThat(codec.doCanDecode(Value.ENUM)).isTrue();
-    }
+		assertThat(codec.doCanDecode(Value.VARCHAR)).isTrue();
+		assertThat(codec.doCanDecode(Value.VARCHAR_IGNORECASE)).isTrue();
+		assertThat(codec.doCanDecode(Value.UNKNOWN)).isFalse();
+		assertThat(codec.doCanDecode(Value.INTEGER)).isFalse();
+		assertThat(codec.doCanDecode(Value.ENUM)).isTrue();
+	}
 
-    @Test
-    void doEncode() {
-        String string = "test";
+	@Test
+	void doEncode() {
+		String string = "test";
 
-        assertThat(new StringCodec().doEncode(string))
-            .isEqualTo(ValueVarchar.get("test"));
-    }
+		assertThat(new StringCodec().doEncode(string)).isEqualTo(ValueVarchar.get("test"));
+	}
 
-    @Test
-    void doEncodeNoValue() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new StringCodec().doEncode(null))
-            .withMessage("value must not be null");
-    }
+	@Test
+	void doEncodeNoValue() {
+		assertThatIllegalArgumentException().isThrownBy(() -> new StringCodec().doEncode(null))
+				.withMessage("value must not be null");
+	}
 
-    @Test
-    void encodeNull() {
-        assertThat(new StringCodec().encodeNull())
-            .isEqualTo(ValueNull.INSTANCE);
-    }
+	@Test
+	void encodeNull() {
+		assertThat(new StringCodec().encodeNull()).isEqualTo(ValueNull.INSTANCE);
+	}
 
-    @Test
-    void decodeEnum() {
-        assertThat(new StringCodec().decode(ValueEnumBase.get("testEnumString", 0), String.class))
-            .isEqualTo("testEnumString");
-    }
+	@Test
+	void decodeEnum() {
+		assertThat(new StringCodec().decode(ValueEnumBase.get("testEnumString", 0), String.class))
+				.isEqualTo("testEnumString");
+	}
 }

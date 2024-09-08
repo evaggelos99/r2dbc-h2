@@ -16,15 +16,6 @@
 
 package io.github.evaggelos99.r2dbc.h2;
 
-import io.github.evaggelos99.r2dbc.h2.H2ConnectionFactoryProvider;
-import io.r2dbc.spi.ConnectionFactories;
-import io.r2dbc.spi.ConnectionFactory;
-import io.r2dbc.spi.ConnectionFactoryOptions;
-import io.r2dbc.spi.R2dbcNonTransientException;
-import org.junit.jupiter.api.Test;
-import reactor.core.publisher.Mono;
-import reactor.test.StepVerifier;
-
 import static io.github.evaggelos99.r2dbc.h2.H2ConnectionFactoryProvider.H2_DRIVER;
 import static io.github.evaggelos99.r2dbc.h2.H2ConnectionFactoryProvider.PROTOCOL_MEM;
 import static io.github.evaggelos99.r2dbc.h2.H2ConnectionFactoryProvider.URL;
@@ -33,62 +24,64 @@ import static io.r2dbc.spi.ConnectionFactoryOptions.DRIVER;
 import static io.r2dbc.spi.ConnectionFactoryOptions.PROTOCOL;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import org.junit.jupiter.api.Test;
+
+import io.r2dbc.spi.ConnectionFactories;
+import io.r2dbc.spi.ConnectionFactory;
+import io.r2dbc.spi.ConnectionFactoryOptions;
+import io.r2dbc.spi.R2dbcNonTransientException;
+import reactor.core.publisher.Mono;
+import reactor.test.StepVerifier;
+
 final class H2ConnectionFactoryProviderTest {
 
-    private final H2ConnectionFactoryProvider provider = new H2ConnectionFactoryProvider();
+	private final H2ConnectionFactoryProvider provider = new H2ConnectionFactoryProvider();
 
-    @Test
-    void doesNotSupport() {
-        assertThat(this.provider.supports(ConnectionFactoryOptions.builder()
-            .option(DRIVER, H2_DRIVER)
-            .build())).isFalse();
-    }
+	@Test
+	void doesNotSupport() {
+		assertThat(this.provider.supports(ConnectionFactoryOptions.builder().option(DRIVER, H2_DRIVER).build()))
+				.isFalse();
+	}
 
-    @Test
-    void doesNotSupportWithWrongDriver() {
-        assertThat(this.provider.supports(ConnectionFactoryOptions.builder()
-            .option(DRIVER, "test-driver")
-            .option(URL, "test-url")
-            .build())).isFalse();
-    }
+	@Test
+	void doesNotSupportWithWrongDriver() {
+		assertThat(this.provider.supports(
+				ConnectionFactoryOptions.builder().option(DRIVER, "test-driver").option(URL, "test-url").build()))
+				.isFalse();
+	}
 
-    @Test
-    void doesNotSupportWithoutDriver() {
-        assertThat(this.provider.supports(ConnectionFactoryOptions.builder()
-            .option(URL, "test-url")
-            .build())).isFalse();
-    }
+	@Test
+	void doesNotSupportWithoutDriver() {
+		assertThat(this.provider.supports(ConnectionFactoryOptions.builder().option(URL, "test-url").build()))
+				.isFalse();
+	}
 
-    @Test
-    void supportsWithProtocolAndDatabase() {
-        assertThat(this.provider.supports(ConnectionFactoryOptions.builder()
-            .option(DRIVER, H2_DRIVER)
-            .option(PROTOCOL, PROTOCOL_MEM)
-            .option(DATABASE, "test-database")
-            .build())).isTrue();
-    }
+	@Test
+	void supportsWithProtocolAndDatabase() {
+		assertThat(this.provider.supports(ConnectionFactoryOptions.builder().option(DRIVER, H2_DRIVER)
+				.option(PROTOCOL, PROTOCOL_MEM).option(DATABASE, "test-database").build())).isTrue();
+	}
 
-    @Test
-    void supportsWithUrl() {
-        assertThat(this.provider.supports(ConnectionFactoryOptions.builder()
-            .option(DRIVER, H2_DRIVER)
-            .option(URL, "test-url")
-            .build())).isTrue();
-    }
+	@Test
+	void supportsWithUrl() {
+		assertThat(this.provider
+				.supports(ConnectionFactoryOptions.builder().option(DRIVER, H2_DRIVER).option(URL, "test-url").build()))
+				.isTrue();
+	}
 
-    @Test
-    void supportsKnownOptions() {
-        ConnectionFactory connectionFactory = ConnectionFactories.get("r2dbc:h2:mem:///option-test?access_mode_data=r");
-        Mono.from(connectionFactory.create())
-            .flatMapMany(o -> o.createStatement("CREATE TABLE option_test (id int)").execute())
-            .as(StepVerifier::create)
-            .expectErrorSatisfies(e -> {
-                assertThat(e).isInstanceOf(R2dbcNonTransientException.class).hasMessageContaining("90097");
-            }).verify();
-    }
+	@Test
+	void supportsKnownOptions() {
+		final ConnectionFactory connectionFactory = ConnectionFactories
+				.get("r2dbc:h2:mem:///option-test?access_mode_data=r");
+		Mono.from(connectionFactory.create())
+				.flatMapMany(o -> o.createStatement("CREATE TABLE option_test (id int)").execute())
+				.as(StepVerifier::create).expectErrorSatisfies(e -> {
+					assertThat(e).isInstanceOf(R2dbcNonTransientException.class).hasMessageContaining("90097");
+				}).verify();
+	}
 
-    @Test
-    void returnsDriverIdentifier() {
-        assertThat(this.provider.getDriver()).isEqualTo(H2_DRIVER);
-    }
+	@Test
+	void returnsDriverIdentifier() {
+		assertThat(this.provider.getDriver()).isEqualTo(H2_DRIVER);
+	}
 }

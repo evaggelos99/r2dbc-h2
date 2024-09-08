@@ -16,59 +16,56 @@
 
 package io.github.evaggelos99.r2dbc.h2.codecs;
 
-import io.github.evaggelos99.r2dbc.h2.client.Client;
-import io.github.evaggelos99.r2dbc.h2.codecs.ClobCodec;
-import io.r2dbc.spi.Clob;
-import org.h2.value.Value;
-import org.h2.value.ValueClob;
-import org.h2.value.ValueNull;
-import org.junit.jupiter.api.Test;
-import reactor.core.publisher.Flux;
-import reactor.test.StepVerifier;
-
-import java.nio.charset.StandardCharsets;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 import static org.mockito.Mockito.mock;
 
+import java.nio.charset.StandardCharsets;
+
+import org.h2.value.Value;
+import org.h2.value.ValueClob;
+import org.h2.value.ValueNull;
+import org.junit.jupiter.api.Test;
+
+import io.github.evaggelos99.r2dbc.h2.client.Client;
+import io.r2dbc.spi.Clob;
+import reactor.core.publisher.Flux;
+import reactor.test.StepVerifier;
+
 final class ClobCodecTest {
 
-    String TEST = "hello你好こんにちはアロハ안녕하세요Здравствуйте";
-    byte[] TEST_BYTES = TEST.getBytes(StandardCharsets.UTF_8);
+	String TEST = "hello你好こんにちはアロハ안녕하세요Здравствуйте";
+	byte[] TEST_BYTES = TEST.getBytes(StandardCharsets.UTF_8);
 
-    @Test
-    void decode() {
-        Flux.from(new ClobCodec(mock(Client.class)).decode(ValueClob.createSmall(TEST_BYTES), Clob.class).stream())
-            .as(StepVerifier::create)
-            .expectNext(TEST)
-            .verifyComplete();
-    }
+	@Test
+	void decode() {
+		Flux.from(new ClobCodec(mock(Client.class)).decode(ValueClob.createSmall(TEST_BYTES), Clob.class).stream())
+				.as(StepVerifier::create).expectNext(TEST).verifyComplete();
+	}
 
-    @Test
-    void decodeNull() {
-        assertThat(new ClobCodec(mock(Client.class)).doDecode(null, Clob.class)).isNull();
-    }
+	@Test
+	void decodeNull() {
+		assertThat(new ClobCodec(mock(Client.class)).doDecode(null, Clob.class)).isNull();
+	}
 
-    @Test
-    void doCanDecode() {
-        ClobCodec codec = new ClobCodec(mock(Client.class));
+	@Test
+	void doCanDecode() {
+		ClobCodec codec = new ClobCodec(mock(Client.class));
 
-        assertThat(codec.doCanDecode(Value.CLOB)).isTrue();
-        assertThat(codec.doCanDecode(Value.BLOB)).isFalse();
-        assertThat(codec.doCanDecode(Value.INTEGER)).isFalse();
-    }
+		assertThat(codec.doCanDecode(Value.CLOB)).isTrue();
+		assertThat(codec.doCanDecode(Value.BLOB)).isFalse();
+		assertThat(codec.doCanDecode(Value.INTEGER)).isFalse();
+	}
 
-    @Test
-    void doEncodeNoValue() {
-        assertThatIllegalArgumentException().isThrownBy(() -> {
-            new ClobCodec(mock(Client.class)).doEncode(null);
-        }).withMessage("value must not be null");
-    }
+	@Test
+	void doEncodeNoValue() {
+		assertThatIllegalArgumentException().isThrownBy(() -> {
+			new ClobCodec(mock(Client.class)).doEncode(null);
+		}).withMessage("value must not be null");
+	}
 
-    @Test
-    void encodeNull() {
-        assertThat(new ClobCodec(mock(Client.class)).encodeNull())
-            .isEqualTo(ValueNull.INSTANCE);
-    }
+	@Test
+	void encodeNull() {
+		assertThat(new ClobCodec(mock(Client.class)).encodeNull()).isEqualTo(ValueNull.INSTANCE);
+	}
 }

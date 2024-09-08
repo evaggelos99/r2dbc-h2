@@ -16,50 +16,44 @@
 
 package io.github.evaggelos99.r2dbc.h2.codecs;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
+
 import org.h2.value.Value;
-import org.h2.value.ValueBinary;
 import org.h2.value.ValueNull;
 import org.h2.value.ValueVarbinary;
 import org.junit.jupiter.api.Test;
 
-import io.github.evaggelos99.r2dbc.h2.codecs.BytesCodec;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
-
 final class BytesCodecTest {
 
-    byte[] TEST_BYTE = "Hello".getBytes();
+	byte[] TEST_BYTE = "Hello".getBytes();
 
-    @Test
-    void decode() {
-        assertThat(new BytesCodec().decode(ValueVarbinary.get(TEST_BYTE), byte[].class))
-            .isEqualTo(TEST_BYTE);
-    }
+	@Test
+	void decode() {
+		assertThat(new BytesCodec().decode(ValueVarbinary.get(TEST_BYTE), byte[].class)).isEqualTo(TEST_BYTE);
+	}
 
-    @Test
-    void doCanDecode() {
-        BytesCodec codec = new BytesCodec();
+	@Test
+	void doCanDecode() {
+		BytesCodec codec = new BytesCodec();
 
-        assertThat(codec.doCanDecode(Value.VARBINARY)).isTrue();
-        assertThat(codec.doCanDecode(Value.INTEGER)).isFalse();
-    }
+		assertThat(codec.doCanDecode(Value.VARBINARY)).isTrue();
+		assertThat(codec.doCanDecode(Value.INTEGER)).isFalse();
+	}
 
-    @Test
-    void doEncode() {
-        assertThat(new BytesCodec().doEncode(TEST_BYTE))
-            .isEqualTo(ValueVarbinary.get(TEST_BYTE));
-    }
+	@Test
+	void doEncode() {
+		assertThat(new BytesCodec().doEncode(TEST_BYTE)).isEqualTo(ValueVarbinary.get(TEST_BYTE));
+	}
 
-    @Test
-    void doEncodeNoValue() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new BytesCodec().doEncode(null))
-            .withMessage("value must not be null");
-    }
+	@Test
+	void doEncodeNoValue() {
+		assertThatIllegalArgumentException().isThrownBy(() -> new BytesCodec().doEncode(null))
+				.withMessage("value must not be null");
+	}
 
-    @Test
-    void encodeNull() {
-        assertThat(new BytesCodec().encodeNull())
-            .isEqualTo(ValueNull.INSTANCE);
-    }
+	@Test
+	void encodeNull() {
+		assertThat(new BytesCodec().encodeNull()).isEqualTo(ValueNull.INSTANCE);
+	}
 }

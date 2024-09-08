@@ -29,48 +29,48 @@ import java.util.UUID;
 
 public final class H2ServerExtension implements BeforeAllCallback, AfterAllCallback {
 
-    private final String password = UUID.randomUUID().toString();
+	private final String password = UUID.randomUUID().toString();
 
-    private final String url = String.format("mem:%s", UUID.randomUUID().toString());
+	private final String url = String.format("mem:%s", UUID.randomUUID().toString());
 
-    private final String username = UUID.randomUUID().toString();
+	private final String username = UUID.randomUUID().toString();
 
-    private HikariDataSource dataSource;
+	private HikariDataSource dataSource;
 
-    private JdbcOperations jdbcOperations;
+	private JdbcOperations jdbcOperations;
 
-    @Override
-    public void afterAll(ExtensionContext context) {
-        this.dataSource.close();
-    }
+	@Override
+	public void afterAll(ExtensionContext context) {
+		this.dataSource.close();
+	}
 
-    @Override
-    public void beforeAll(ExtensionContext context) throws Exception {
-        this.dataSource = DataSourceBuilder.create()
-            .type(HikariDataSource.class)
-            .url(String.format("jdbc:h2:%s;USER=%s;PASSWORD=%s;DB_CLOSE_DELAY=-1;TRACE_LEVEL_FILE=4", this.url, this.username, this.password))
-            .build();
+	@Override
+	public void beforeAll(ExtensionContext context) throws Exception {
+		this.dataSource = DataSourceBuilder.create().type(HikariDataSource.class)
+				.url(String.format("jdbc:h2:%s;USER=%s;PASSWORD=%s;DB_CLOSE_DELAY=-1;TRACE_LEVEL_FILE=4", this.url,
+						this.username, this.password))
+				.build();
 
-        this.dataSource.setMaximumPoolSize(1);
+		this.dataSource.setMaximumPoolSize(1);
 
-        this.jdbcOperations = new JdbcTemplate(this.dataSource);
-    }
+		this.jdbcOperations = new JdbcTemplate(this.dataSource);
+	}
 
-    @Nullable
-    public JdbcOperations getJdbcOperations() {
-        return this.jdbcOperations;
-    }
+	@Nullable
+	public JdbcOperations getJdbcOperations() {
+		return this.jdbcOperations;
+	}
 
-    public String getPassword() {
-        return this.password;
-    }
+	public String getPassword() {
+		return this.password;
+	}
 
-    public String getUrl() {
-        return this.url;
-    }
+	public String getUrl() {
+		return this.url;
+	}
 
-    public String getUsername() {
-        return this.username;
-    }
+	public String getUsername() {
+		return this.username;
+	}
 
 }

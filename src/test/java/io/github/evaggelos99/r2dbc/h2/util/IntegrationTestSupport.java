@@ -36,32 +36,29 @@ import static io.r2dbc.spi.ConnectionFactoryOptions.builder;
  */
 public abstract class IntegrationTestSupport {
 
-    @RegisterExtension
-    protected static final H2ServerExtension SERVER = new H2ServerExtension();
+	@RegisterExtension
+	protected static final H2ServerExtension SERVER = new H2ServerExtension();
 
-    protected static H2ConnectionFactory connectionFactory;
+	protected static H2ConnectionFactory connectionFactory;
 
-    protected static H2Connection connection;
+	protected static H2Connection connection;
 
-    @BeforeAll
-    static void beforeAll() {
+	@BeforeAll
+	static void beforeAll() {
 
-        ConnectionFactoryOptions options = builder()
-            .option(DRIVER, H2ConnectionFactoryProvider.H2_DRIVER)
-            .option(PASSWORD, SERVER.getPassword())
-            .option(URL, SERVER.getUrl())
-            .option(USER, SERVER.getUsername())
-            .build();
+		ConnectionFactoryOptions options = builder().option(DRIVER, H2ConnectionFactoryProvider.H2_DRIVER)
+				.option(PASSWORD, SERVER.getPassword()).option(URL, SERVER.getUrl()).option(USER, SERVER.getUsername())
+				.build();
 
-        connectionFactory = (H2ConnectionFactory) ConnectionFactories.get(options);
-        connection = connectionFactory.create().block();
-    }
+		connectionFactory = (H2ConnectionFactory) ConnectionFactories.get(options);
+		connection = connectionFactory.create().block();
+	}
 
-    @AfterAll
-    static void afterAll() {
+	@AfterAll
+	static void afterAll() {
 
-        if (connection != null) {
-            connection.close().subscribe();
-        }
-    }
+		if (connection != null) {
+			connection.close().subscribe();
+		}
+	}
 }

@@ -16,47 +16,42 @@
 
 package io.github.evaggelos99.r2dbc.h2.codecs;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
+
 import org.h2.value.Value;
 import org.h2.value.ValueJson;
 import org.h2.value.ValueNull;
 import org.junit.jupiter.api.Test;
 
-import io.github.evaggelos99.r2dbc.h2.codecs.JsonCodec;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
-
 final class JsonCodecTest {
 
-    @Test
-    void decode() {
-        assertThat(new JsonCodec().decode(ValueJson.fromJson("{}"), String.class))
-            .isEqualTo("{}");
-    }
+	@Test
+	void decode() {
+		assertThat(new JsonCodec().decode(ValueJson.fromJson("{}"), String.class)).isEqualTo("{}");
+	}
 
-    @Test
-    void doCanDecode() {
-        JsonCodec codec = new JsonCodec();
+	@Test
+	void doCanDecode() {
+		JsonCodec codec = new JsonCodec();
 
-        assertThat(codec.doCanDecode(Value.JSON)).isTrue();
-        assertThat(codec.doCanDecode(Value.DOUBLE)).isFalse();
-    }
+		assertThat(codec.doCanDecode(Value.JSON)).isTrue();
+		assertThat(codec.doCanDecode(Value.DOUBLE)).isFalse();
+	}
 
-    @Test
-    void doEncode() {
-        assertThat(new JsonCodec().doEncode("{}"))
-            .isEqualTo(ValueJson.fromJson("{}"));
-    }
+	@Test
+	void doEncode() {
+		assertThat(new JsonCodec().doEncode("{}")).isEqualTo(ValueJson.fromJson("{}"));
+	}
 
-    @Test
-    void doEncodeNoValue() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new JsonCodec().doEncode(null))
-            .withMessage("value must not be null");
-    }
+	@Test
+	void doEncodeNoValue() {
+		assertThatIllegalArgumentException().isThrownBy(() -> new JsonCodec().doEncode(null))
+				.withMessage("value must not be null");
+	}
 
-    @Test
-    void encodeNull() {
-        assertThat(new JsonCodec().encodeNull())
-            .isEqualTo(ValueNull.INSTANCE);
-    }
+	@Test
+	void encodeNull() {
+		assertThat(new JsonCodec().encodeNull()).isEqualTo(ValueNull.INSTANCE);
+	}
 }

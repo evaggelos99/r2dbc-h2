@@ -16,25 +16,23 @@
 
 package io.github.evaggelos99.r2dbc.h2.client;
 
+import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
+
 import org.h2.value.ValueInteger;
 import org.junit.jupiter.api.Test;
 
-import io.github.evaggelos99.r2dbc.h2.client.Binding;
-
-import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
-
 final class BindingTest {
 
-    @Test
-    void addNoIndex() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new Binding().add(null, ValueInteger.get(0)))
-            .withMessage("index must not be null");
-    }
+	@Test
+	void addNoIndex() {
+		assertThatIllegalArgumentException().isThrownBy(() -> new Binding().add(null, ValueInteger.get(0)))
+				.withMessage("index must not be null");
+	}
 
-    @Test
-    void addNoValue() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new Binding().add(1, null))
-            .withMessage("value must not be null");
-    }
+	@Test
+	void addNoValue() {
+		assertThatIllegalArgumentException().isThrownBy(() -> new Binding().add(1, null))
+				.withMessage("value must not be null");
+	}
 
 }

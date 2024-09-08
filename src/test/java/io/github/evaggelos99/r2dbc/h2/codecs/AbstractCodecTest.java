@@ -16,43 +16,41 @@
 
 package io.github.evaggelos99.r2dbc.h2.codecs;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import org.h2.value.Value;
 import org.h2.value.ValueVarchar;
 import org.junit.jupiter.api.Test;
 
-import io.github.evaggelos99.r2dbc.h2.codecs.AbstractCodec;
-
-import static org.assertj.core.api.Assertions.assertThat;
-
 public class AbstractCodecTest {
 
-    @Test
-    void decodeNull() {
-        MockCodec codec = new MockCodec();
+	@Test
+	void decodeNull() {
+		final MockCodec codec = new MockCodec();
 
-        assertThat(codec.decode(null, String.class)).isNull();
-    }
+		assertThat(codec.decode(null, String.class)).isNull();
+	}
 
-    static class MockCodec extends AbstractCodec<String> {
+	static class MockCodec extends AbstractCodec<String> {
 
-        MockCodec() {
-            super(String.class);
-        }
+		MockCodec() {
+			super(String.class);
+		}
 
-        @Override
-        boolean doCanDecode(int dataType) {
-            return true;
-        }
+		@Override
+		boolean doCanDecode(final int dataType) {
+			return true;
+		}
 
-        @Override
-        String doDecode(Value value, Class<? extends String> type) {
-            return "test";
-        }
+		@Override
+		String doDecode(final Value value, final Class<? extends String> type) {
+			return "test";
+		}
 
-        @Override
-        Value doEncode(String value) {
-            return ValueVarchar.get("test");
-        }
-    }
+		@Override
+		Value doEncode(final String value) {
+			return ValueVarchar.get("test");
+		}
+	}
 
 }

@@ -16,7 +16,7 @@
 
 package io.github.evaggelos99.r2dbc.h2;
 
-import io.github.evaggelos99.io.r2dbc.h2.util.H2ServerExtension;
+import io.github.evaggelos99.r2dbc.h2.util.H2ServerExtension;
 import io.r2dbc.spi.Connection;
 import io.r2dbc.spi.ConnectionFactories;
 import io.r2dbc.spi.ConnectionFactory;
@@ -39,81 +39,65 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 final class H2RowTest {
 
-    @RegisterExtension
-    static final H2ServerExtension SERVER = new H2ServerExtension();
+	@RegisterExtension
+	static final H2ServerExtension SERVER = new H2ServerExtension();
 
-    private final ConnectionFactory connectionFactory = ConnectionFactories.get(ConnectionFactoryOptions.builder()
-        .option(DRIVER, H2_DRIVER)
-        .option(PASSWORD, SERVER.getPassword())
-        .option(URL, SERVER.getUrl())
-        .option(USER, SERVER.getUsername())
-        .build());
+	private final ConnectionFactory connectionFactory = ConnectionFactories
+			.get(ConnectionFactoryOptions.builder().option(DRIVER, H2_DRIVER).option(PASSWORD, SERVER.getPassword())
+					.option(URL, SERVER.getUrl()).option(USER, SERVER.getUsername()).build());
 
-    @BeforeEach
-    void createTable() {
-        getJdbcOperations().execute("CREATE TABLE test ( test_value INTEGER )");
-    }
+	@BeforeEach
+	void createTable() {
+		getJdbcOperations().execute("CREATE TABLE test ( test_value INTEGER )");
+	}
 
-    @AfterEach
-    void dropTable() {
-        getJdbcOperations().execute("DROP TABLE test");
-    }
+	@AfterEach
+	void dropTable() {
+		getJdbcOperations().execute("DROP TABLE test");
+	}
 
-    @Test
-    void selectWithAliases() {
-        getJdbcOperations().execute("INSERT INTO test VALUES (100)");
+	@Test
+	void selectWithAliases() {
+		getJdbcOperations().execute("INSERT INTO test VALUES (100)");
 
-        Mono.from(this.connectionFactory.create())
-            .flatMapMany(connection -> Flux.from(connection
+		Mono.from(this.connectionFactory.create()).flatMapMany(connection -> Flux.from(connection
 
-                    .createStatement("SELECT test_value as ALIASED_VALUE FROM test")
-                    .execute())
-                .flatMap(result -> Flux.from(result
-                        .map((row, rowMetadata) -> row.get("ALIASED_VALUE", Integer.class)))
-                    .collectList())
+				.createStatement("SELECT test_value as ALIASED_VALUE FROM test").execute())
+				.flatMap(result -> Flux.from(result.map((row, rowMetadata) -> row.get("ALIASED_VALUE", Integer.class)))
+						.collectList())
 
-                .concatWith(close(connection)))
-            .as(StepVerifier::create)
-            .expectNext(Collections.singletonList(100))
-            .verifyComplete();
-    }
+				.concatWith(close(connection))).as(StepVerifier::create).expectNext(Collections.singletonList(100))
+				.verifyComplete();
+	}
 
-    @Test
-    void selectWithoutAliases() {
-        getJdbcOperations().execute("INSERT INTO test VALUES (100)");
+	@Test
+	void selectWithoutAliases() {
+		getJdbcOperations().execute("INSERT INTO test VALUES (100)");
 
-        Mono.from(this.connectionFactory.create())
-            .flatMapMany(connection -> Flux.from(connection
+		Mono.from(this.connectionFactory.create()).flatMapMany(connection -> Flux.from(connection
 
-                    .createStatement("SELECT test_value FROM test")
-                    .execute())
-                .flatMap(new H2PostgresqlTestKit()::extractColumns)
+				.createStatement("SELECT test_value FROM test").execute())
+				.flatMap(new H2PostgresqlTestKit()::extractColumns)
 
-                .concatWith(close(connection)))
-            .as(StepVerifier::create)
-            .expectNextMatches(integers -> {
-                assertThat(integers).containsExactly(100);
-                return true;
-            })
-            .verifyComplete();
-    }
+				.concatWith(close(connection))).as(StepVerifier::create).expectNextMatches(integers -> {
+					assertThat(integers).containsExactly(100);
+					return true;
+				}).verifyComplete();
+	}
 
+	private JdbcOperations getJdbcOperations() {
+		JdbcOperations jdbcOperations = SERVER.getJdbcOperations();
 
-    private JdbcOperations getJdbcOperations() {
-        JdbcOperations jdbcOperations = SERVER.getJdbcOperations();
+		if (jdbcOperations == null) {
+			throw new IllegalStateException("JdbcOperations not yet initialized");
+		}
 
-        if (jdbcOperations == null) {
-            throw new IllegalStateException("JdbcOperations not yet initialized");
-        }
+		return jdbcOperations;
+	}
 
-        return jdbcOperations;
-    }
-
-    static <T> Mono<T> close(Connection connection) {
-        return Mono.from(connection
-                .close())
-            .then(Mono.empty());
-    }
+	static <T> Mono<T> close(Connection connection) {
+		return Mono.from(connection.close()).then(Mono.empty());
+	}
 
 //    private final List<Column> columns = Arrays.asList(
 //        new Column(TEST.buffer(4).writeInt(100), 200, BINARY, "test-name-1"),
