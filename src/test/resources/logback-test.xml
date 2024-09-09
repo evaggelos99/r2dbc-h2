@@ -24,7 +24,7 @@
     </appender>
 
     <logger name="h2database"  level="WARN"/>
-    <logger name="io.github.evaggelos99.io.r2dbc.h2" level="INFO"/>
+    <logger name="io.github.evaggelos99.r2dbc.h2" level="INFO"/>
     <logger name="stream"      level="INFO"/>
     <logger name="test"        level="INFO"/>
 
