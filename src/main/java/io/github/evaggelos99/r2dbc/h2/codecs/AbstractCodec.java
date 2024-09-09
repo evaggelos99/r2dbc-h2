@@ -26,26 +26,26 @@ abstract class AbstractCodec<T> implements Codec<T> {
 
 	private final Class<T> type;
 
-	AbstractCodec(Class<T> type) {
+	AbstractCodec(final Class<T> type) {
 		this.type = Assert.requireNonNull(type, "type must not be null");
 	}
 
 	@Override
-	public boolean canDecode(int dataType, Class<?> type) {
+	public boolean canDecode(final int dataType, final Class<?> type) {
 		Assert.requireNonNull(type, "type must not be null");
 
 		return type.isAssignableFrom(this.type) && doCanDecode(dataType);
 	}
 
 	@Override
-	public boolean canEncode(Object value) {
+	public boolean canEncode(final Object value) {
 		Assert.requireNonNull(value, "value must not be null");
 
 		return this.type.isInstance(value);
 	}
 
 	@Override
-	public boolean canEncodeNull(Class<?> type) {
+	public boolean canEncodeNull(final Class<?> type) {
 		Assert.requireNonNull(type, "type must not be null");
 
 		return this.type.isAssignableFrom(type);
@@ -53,7 +53,7 @@ abstract class AbstractCodec<T> implements Codec<T> {
 
 	@Nullable
 	@Override
-	public T decode(Value value, Class<? extends T> type) {
+	public T decode(final Value value, final Class<? extends T> type) {
 		if (value == null || value == ValueNull.INSTANCE) {
 			return null;
 		}
@@ -63,7 +63,7 @@ abstract class AbstractCodec<T> implements Codec<T> {
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public Value encode(Object value) {
+	public Value encode(final Object value) {
 		Assert.requireNonNull(value, "value must not be null");
 
 		return doEncode((T) value);

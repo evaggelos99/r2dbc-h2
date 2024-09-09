@@ -216,7 +216,7 @@
             
     <build>
         <plugins>
-            <plugin>
+        	<plugin>
                 <artifactId>maven-site-plugin</artifactId>
                 <version>3.7.1</version>
             </plugin>
@@ -238,20 +238,6 @@
                     </execution>
                 </executions>
             </plugin>
-            <!-- Javadoc -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-javadoc-plugin</artifactId>
-                <version>3.3.0</version>
-                <executions>
-                    <execution>
-                        <id>attach-javadocs</id>
-                        <goals>
-                        <goal>jar</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
             <!--Compiler -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -264,38 +250,313 @@
                     <encoding>UTF-8</encoding>
                 </configuration>
             </plugin>
-            <!--Release -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-release-plugin</artifactId>
-                <version>3.1.1</version>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>2.22.2</version>
+                <configuration>
+                    <runOrder>random</runOrder>
+                    <includes>
+                        <include>**/*TestKit.java</include>
+                        <include>**/*Test.java</include>
+                    </includes>
+                </configuration>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-gpg-plugin</artifactId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>3.2.2</version>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+                            <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
+                        </manifest>
+                        <manifestEntries>
+                            <R2DBC-Specification-Version>${r2dbc-spi.version}</R2DBC-Specification-Version>
+                            <Automatic-Module-Name>r2dbc.h2</Automatic-Module-Name>
+                        </manifestEntries>
+                    </archive>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-enforcer-plugin</artifactId>
                 <version>3.1.0</version>
                 <executions>
                     <execution>
-                        <id>sign-artifacts</id>
-                        <phase>package</phase>
+                        <id>enforce-no-snapshots</id>
                         <goals>
-                            <goal>sign</goal>
+                            <goal>enforce</goal>
+                        </goals>
+                        <configuration>
+                            <rules>
+                                <requireReleaseDeps>
+                                    <onlyWhenRelease>true</onlyWhenRelease>
+                                    <message>No Snapshots in releases allowed!</message>
+                                </requireReleaseDeps>
+                            </rules>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <version>3.3.0</version>
+                <executions>
+                    <execution>
+                        <id>attach-javadocs</id>
+                        <goals>
+                            <goal>jar</goal>
                         </goals>
                     </execution>
                 </executions>
             </plugin>
             <plugin>
-                <groupId>org.sonatype.central</groupId>
-                <artifactId>central-publishing-maven-plugin</artifactId>
-                <version>0.5.0</version>
-                <extensions>true</extensions>
-                <configuration>
-                    <publishingServerId>central</publishingServerId>
-                </configuration>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+                <version>3.2.1</version>
+                <executions>
+                    <execution>
+                        <id>attach-javadocs</id>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>flatten-maven-plugin</artifactId>
+                <version>1.2.1</version>
+                <executions>
+                    <execution>
+                        <id>flatten</id>
+                        <phase>process-resources</phase>
+                        <goals>
+                            <goal>flatten</goal>
+                        </goals>
+                        <configuration>
+                            <updatePomFile>true</updatePomFile>
+                            <flattenMode>oss</flattenMode>
+                            <pomElements>
+                                <properties>remove</properties>
+                                <parent>expand</parent>
+                                <repositories>remove</repositories>
+                                <profiles>remove</profiles>
+                            </pomElements>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>flatten-clean</id>
+                        <phase>clean</phase>
+                        <goals>
+                            <goal>clean</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
-        
+        <resources>
+            <resource>
+                <directory>${project.basedir}</directory>
+                <includes>
+                    <include>LICENSE</include>
+                    <include>NOTICE</include>
+                    <include>CHANGELOG</include>
+                </includes>
+                <targetPath>META-INF</targetPath>
+            </resource>
+            <resource>
+                <directory>${project.basedir}/src/main/resources</directory>
+            </resource>
+        </resources>
     </build>
+    
+    <profiles>
+    	
+        <!-- In order to deploy to central run mvn clean deploy -P central -->
+    	<profile>
+			<id>central</id> <!-- publish to central -->    	
+    		<build>
+
+		        <plugins>
+		        	<plugin>
+		                <artifactId>maven-site-plugin</artifactId>
+		                <version>3.7.1</version>
+		            </plugin>
+		            <plugin>
+		                <artifactId>maven-project-info-reports-plugin</artifactId>
+		                <version>3.0.0</version>
+		            </plugin>
+		            <!-- Source -->
+		            <plugin>
+		                <groupId>org.apache.maven.plugins</groupId>
+		                <artifactId>maven-source-plugin</artifactId>
+		                <version>3.2.1</version>
+		                <executions>
+		                    <execution>
+		                        <id>attach-sources</id>
+		                        <goals>
+		                            <goal>jar-no-fork</goal>
+		                        </goals>
+		                    </execution>
+		                </executions>
+		            </plugin>
+		            <!--Compiler -->
+		            <plugin>
+		                <groupId>org.apache.maven.plugins</groupId>
+		                <artifactId>maven-compiler-plugin</artifactId>
+		                <version>3.13.0</version>
+		                <configuration>
+		                    <source>1.8</source>
+		                    <target>1.8</target>
+		                    <verbose>true</verbose>
+		                    <encoding>UTF-8</encoding>
+		                </configuration>
+		            </plugin>
+		            <plugin>
+		                <groupId>org.apache.maven.plugins</groupId>
+		                <artifactId>maven-surefire-plugin</artifactId>
+		                <version>2.22.2</version>
+		                <configuration>
+		                    <runOrder>random</runOrder>
+		                    <includes>
+		                        <include>**/*TestKit.java</include>
+		                        <include>**/*Test.java</include>
+		                    </includes>
+		                </configuration>
+		            </plugin>
+		            <plugin>
+		                <groupId>org.apache.maven.plugins</groupId>
+		                <artifactId>maven-jar-plugin</artifactId>
+		                <version>3.2.2</version>
+		                <configuration>
+		                    <archive>
+		                        <manifest>
+		                            <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+		                            <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
+		                        </manifest>
+		                        <manifestEntries>
+		                            <R2DBC-Specification-Version>${r2dbc-spi.version}</R2DBC-Specification-Version>
+		                            <Automatic-Module-Name>r2dbc.h2</Automatic-Module-Name>
+		                        </manifestEntries>
+		                    </archive>
+		                </configuration>
+		            </plugin>
+		            <plugin>
+		                <groupId>org.apache.maven.plugins</groupId>
+		                <artifactId>maven-enforcer-plugin</artifactId>
+		                <version>3.1.0</version>
+		                <executions>
+		                    <execution>
+		                        <id>enforce-no-snapshots</id>
+		                        <goals>
+		                            <goal>enforce</goal>
+		                        </goals>
+		                        <configuration>
+		                            <rules>
+		                                <requireReleaseDeps>
+		                                    <onlyWhenRelease>true</onlyWhenRelease>
+		                                    <message>No Snapshots in releases allowed!</message>
+		                                </requireReleaseDeps>
+		                            </rules>
+		                        </configuration>
+		                    </execution>
+		                </executions>
+		            </plugin>
+		            <plugin>
+		                <groupId>org.apache.maven.plugins</groupId>
+		                <artifactId>maven-javadoc-plugin</artifactId>
+		                <version>3.3.0</version>
+		                <executions>
+		                    <execution>
+		                        <id>attach-javadocs</id>
+		                        <goals>
+		                            <goal>jar</goal>
+		                        </goals>
+		                    </execution>
+		                </executions>
+		            </plugin>
+		            <plugin>
+		                <groupId>org.apache.maven.plugins</groupId>
+		                <artifactId>maven-source-plugin</artifactId>
+		                <version>3.2.1</version>
+		                <executions>
+		                    <execution>
+		                        <id>attach-javadocs</id>
+		                        <goals>
+		                            <goal>jar</goal>
+		                        </goals>
+		                    </execution>
+		                </executions>
+		            </plugin>
+		            <plugin>
+		                <groupId>org.codehaus.mojo</groupId>
+		                <artifactId>flatten-maven-plugin</artifactId>
+		                <version>1.2.1</version>
+		                <executions>
+		                    <execution>
+		                        <id>flatten</id>
+		                        <phase>process-resources</phase>
+		                        <goals>
+		                            <goal>flatten</goal>
+		                        </goals>
+		                        <configuration>
+		                            <updatePomFile>true</updatePomFile>
+		                            <flattenMode>oss</flattenMode>
+		                            <pomElements>
+		                                <properties>remove</properties>
+		                                <parent>expand</parent>
+		                                <repositories>remove</repositories>
+		                                <profiles>remove</profiles>
+		                            </pomElements>
+		                        </configuration>
+		                    </execution>
+		                    <execution>
+		                        <id>flatten-clean</id>
+		                        <phase>clean</phase>
+		                        <goals>
+		                            <goal>clean</goal>
+		                        </goals>
+		                    </execution>
+		                </executions>
+		            </plugin>
+		            <!--Release -->
+		            <plugin>
+		                <groupId>org.apache.maven.plugins</groupId>
+		                <artifactId>maven-release-plugin</artifactId>
+		                <version>3.1.1</version>
+		            </plugin>
+		            <plugin>
+		                <groupId>org.apache.maven.plugins</groupId>
+		                <artifactId>maven-gpg-plugin</artifactId>
+		                <version>3.1.0</version>
+		                <executions>
+		                    <execution>
+		                        <id>sign-artifacts</id>
+		                        <phase>package</phase>
+		                        <goals>
+		                            <goal>sign</goal>
+		                        </goals>
+		                    </execution>
+		                </executions>
+		            </plugin>
+		            <plugin>
+		                <groupId>org.sonatype.central</groupId>
+		                <artifactId>central-publishing-maven-plugin</artifactId>
+		                <version>0.5.0</version>
+		                <extensions>true</extensions>
+		                <configuration>
+		                    <publishingServerId>central</publishingServerId>
+		                </configuration>
+		            </plugin>
+		        </plugins>
+		        
+		    </build>
+    	</profile>
+    </profiles>
     
     
 </project>
